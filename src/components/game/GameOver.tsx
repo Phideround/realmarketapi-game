@@ -1,3 +1,4 @@
+import { fmt } from "@/game/format";
 import type { ReactNode } from "react";
 import type { Stats } from "@/game/types";
 
@@ -8,8 +9,8 @@ export function GameOver({ stats, onRestart }: { stats: Stats; onRestart: () => 
         <div className="font-pixel text-2xl text-neon-red animate-blink mb-4">GAME OVER</div>
         <div className="font-term text-lg text-muted-foreground mb-6">The market rekt you.</div>
         <div className="grid grid-cols-2 gap-3 mb-6 text-left">
-          <Item label="Profit" value={`$${stats.profit.toLocaleString()}`} c="text-neon-green" />
-          <Item label="Balance" value={`$${stats.balance.toLocaleString()}`} c="text-neon-green" />
+          <Item label="Profit" value={`$${fmt(stats.profit)}`} c="text-neon-green" />
+          <Item label="Balance" value={`$${fmt(stats.balance)}`} c="text-neon-green" />
           <Item label="Wins" value={stats.wins} c="text-neon-blue" />
           <Item label="Losses" value={stats.losses} c="text-neon-red" />
           <Item label="Best Combo" value={`x${stats.bestCombo}`} c="text-neon-yellow" />

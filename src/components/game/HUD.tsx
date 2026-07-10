@@ -1,3 +1,4 @@
+import { fmt } from "@/game/format";
 import type { ReactNode } from "react";
 import type { Stats } from "@/game/types";
 
@@ -34,8 +35,8 @@ export function HUD({ stats }: { stats: Stats }) {
         </div>
       </div>
       <Stat label="Coins" value={`🪙 ${stats.coins}`} color="text-neon-yellow" />
-      <Stat label="Balance" value={`$${stats.balance.toLocaleString()}`} />
-      <Stat label="Profit" value={`$${stats.profit.toLocaleString()}`} color={stats.profit >= 0 ? "text-neon-green" : "text-neon-red"} />
+      <Stat label="Balance" value={`$${fmt(stats.balance)}`} />
+      <Stat label="Profit" value={`$${fmt(stats.profit)}`} color={stats.profit >= 0 ? "text-neon-green" : "text-neon-red"} />
       <Stat label="Combo" value={`x${stats.combo}`} color="text-neon-yellow" />
       <Stat label="Best" value={`x${stats.bestCombo}`} color="text-neon-magenta" />
       <Stat label="Acc" value={`${stats.accuracy}%`} color="text-neon-blue" />

@@ -41,13 +41,14 @@ export function CandleChart({ feed, tick, className }: Props) {
     const history = feed.history();
     const cur = feed.peek();
     const all = [...history, cur];
-    const view = all.slice(-80);
-    if (view.length < 2) return;
+    const view = all.slice(-80).filter((k) => Number.isFinite(k.close) && Number.isFinite(k.high) && Number.isFinite(k.low));
+    if (view.length < 1) return;
 
     const highs = view.map((k) => k.high);
     const lows = view.map((k) => k.low);
     let max = Math.max(...highs);
     let min = Math.min(...lows);
+    if (max === min) { max += 1; min -= 1; }
     const pad = (max - min) * 0.15 || max * 0.01;
     max += pad; min -= pad;
 

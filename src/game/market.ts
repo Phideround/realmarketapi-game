@@ -86,14 +86,16 @@ export function createSimulatedFeed(seed = Math.floor(Math.random() * 1e9)): Mar
 
     // Random micro-move (gaussian-ish)
     const n = (rand() + rand() + rand() - 1.5) / 1.5;
-    const change = price * (drift * subDt + vol * n * Math.sqrt(subDt) * 3);
+    const change = price * (drift * subDt + vol * n * Math.sqrt(Math.max(0, subDt)) * 3);
     regime.momentum = regime.momentum * 0.9 + change * 0.1;
-    price = Math.max(1, price + change + regime.momentum * 0.05);
+    let next = price + change + regime.momentum * 0.05;
+    if (!Number.isFinite(next)) next = price;
+    price = Math.max(1, next);
 
     cur.close = price;
     cur.high = Math.max(cur.high, price);
     cur.low = Math.min(cur.low, price);
-    cur.volume += Math.abs(change) * (0.5 + rand());
+    cur.volume += Math.abs(change || 0) * (0.5 + rand());
   }
 
   return {
