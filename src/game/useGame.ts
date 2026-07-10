@@ -181,11 +181,15 @@ export function useGame() {
     setNews(["New run — good luck."]);
   }, []);
 
+  const spendCoins = useCallback((n: number) => {
+    setStats((s) => ({ ...s, coins: Math.max(0, s.coins - n) }));
+  }, []);
+
   const feed = feedRef.current!;
   return useMemo(() => ({
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
-    setScanlines, setPaused, predict, reset,
-  }), [feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick, predict, reset]);
+    setScanlines, setPaused, predict, reset, spendCoins,
+  }), [feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick, predict, reset, spendCoins]);
 }
 
 function initialStats(): Stats {
