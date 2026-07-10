@@ -24,7 +24,6 @@ function Game() {
   const g = useGame();
   const [shopOpen, setShopOpen] = useState(false);
   const [owned, setOwned] = useState<string[]>([]);
-  const [coinsOverride, setCoinsOverride] = useState<number | null>(null);
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
@@ -44,13 +43,9 @@ function Game() {
   const buy = useCallback((u: Upgrade) => {
     if (g.stats.coins < u.cost || owned.includes(u.id)) return;
     setOwned((o) => [...o, u.id]);
-    setCoinsOverride(g.stats.coins - u.cost);
-    // Direct mutation via stat: quick hack — reduce coins by mutating game stats via reset avoided; instead patch through a simple event.
-    (g.stats as { coins: number }).coins = g.stats.coins - u.cost;
+    g.spendCoins(u.cost);
     sfx.coin();
-  }, [g.stats, owned]);
-
-  useEffect(() => { if (coinsOverride !== null) setCoinsOverride(null); }, [g.tick, coinsOverride]);
+  }, [g, owned]);
 
   return (
     <div className={`min-h-screen w-full bg-background text-foreground p-2 sm:p-4 ${g.shake ? "animate-shake" : ""}`}>
