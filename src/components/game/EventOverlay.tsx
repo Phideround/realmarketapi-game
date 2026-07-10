@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { FloatingText, GameEvent } from "@/game/types";
 
 export function EventOverlay({ event, floats }: { event: GameEvent | null; floats: FloatingText[] }) {

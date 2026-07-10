@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import type { Stats } from "@/game/types";
 
-function Stat({ label, value, color = "text-neon-green" }: { label: string; value: React.ReactNode; color?: string }) {
+function Stat({ label, value, color = "text-neon-green" }: { label: string; value: ReactNode; color?: string }) {
   return (
     <div className="flex flex-col items-start gap-1 px-3 py-2 pixel-panel min-w-[92px]">
       <span className="font-pixel text-[9px] text-muted-foreground uppercase tracking-wider">{label}</span>

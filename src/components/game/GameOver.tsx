@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Stats } from "@/game/types";
 
 export function GameOver({ stats, onRestart }: { stats: Stats; onRestart: () => void }) {
@@ -24,7 +25,7 @@ export function GameOver({ stats, onRestart }: { stats: Stats; onRestart: () => 
   );
 }
 
-function Item({ label, value, c }: { label: string; value: React.ReactNode; c: string }) {
+function Item({ label, value, c }: { label: string; value: ReactNode; c: string }) {
   return (
     <div className="pixel-panel p-2">
       <div className="font-pixel text-[9px] text-muted-foreground">{label}</div>

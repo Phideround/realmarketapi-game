@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import type { GameEvent, Stats } from "@/game/types";
 
-function PanelTitle({ children }: { children: React.ReactNode }) {
+function PanelTitle({ children }: { children: ReactNode }) {
   return <div className="font-pixel text-[10px] text-neon-blue mb-2 uppercase tracking-widest">{children}</div>;
 }
 
