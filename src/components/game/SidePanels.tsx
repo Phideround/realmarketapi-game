@@ -1,3 +1,4 @@
+import { fmt } from "@/game/format";
 import type { ReactNode } from "react";
 import type { GameEvent, Stats } from "@/game/types";
 
@@ -96,12 +97,12 @@ export function RightPanel({ stats, event, news }: { stats: Stats; event: GameEv
           {LEADERBOARD.map((r, i) => (
             <li key={r.name} className="flex justify-between">
               <span className="text-neon-blue">#{i + 1} {r.name}</span>
-              <span className="text-neon-green">${r.score.toLocaleString()}</span>
+              <span className="text-neon-green">${fmt(r.score)}</span>
             </li>
           ))}
           <li className="flex justify-between border-t border-border/50 pt-1">
             <span className="text-neon-yellow">YOU</span>
-            <span className="text-neon-yellow">${stats.profit.toLocaleString()}</span>
+            <span className="text-neon-yellow">${fmt(stats.profit)}</span>
           </li>
         </ol>
       </div>
