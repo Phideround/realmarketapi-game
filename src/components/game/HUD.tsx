@@ -11,14 +11,24 @@ function Stat({ label, value, color = "text-neon-green" }: { label: string; valu
   );
 }
 
-export function HUD({ stats }: { stats: Stats }) {
+interface HUDProps {
+  stats: Stats;
+  gameLevel: number;
+  levelTarget: number;
+}
+
+export function HUD({ stats, gameLevel, levelTarget }: HUDProps) {
   const hpPct = (stats.hp / stats.maxHp) * 100;
   const nextLvlXp = stats.level * stats.level * 25;
   const prevLvlXp = (stats.level - 1) * (stats.level - 1) * 25;
   const xpPct = ((stats.xp - prevLvlXp) / Math.max(1, nextLvlXp - prevLvlXp)) * 100;
+  const targetPct = Math.min(100, (stats.levelCoinsEarned / levelTarget) * 100);
+
   return (
     <div className="w-full pixel-panel p-3 flex flex-wrap gap-2 items-stretch">
-      <div className="flex flex-col gap-1 flex-1 min-w-[220px] px-3 py-2 pixel-panel">
+      {/* HP + XP + Target bars */}
+      <div className="flex flex-col gap-1 flex-1 min-w-[240px] px-3 py-2 pixel-panel">
+        {/* HP */}
         <div className="flex justify-between font-pixel text-[10px]">
           <span className="text-neon-red">HP</span>
           <span className="text-neon-red">{stats.hp}/{stats.maxHp}</span>
@@ -26,12 +36,21 @@ export function HUD({ stats }: { stats: Stats }) {
         <div className="h-3 w-full bg-terminal border-2 border-border overflow-hidden">
           <div className="h-full bg-[var(--neon-red)] transition-all" style={{ width: `${hpPct}%`, boxShadow: "0 0 12px var(--neon-red)" }} />
         </div>
+        {/* XP */}
         <div className="flex justify-between font-pixel text-[10px] mt-1">
           <span className="text-neon-blue">LVL {stats.level}</span>
           <span className="text-neon-blue">XP {stats.xp}</span>
         </div>
         <div className="h-2 w-full bg-terminal border-2 border-border overflow-hidden">
           <div className="h-full bg-[var(--neon-blue)] transition-all" style={{ width: `${xpPct}%`, boxShadow: "0 0 10px var(--neon-blue)" }} />
+        </div>
+        {/* Level target */}
+        <div className="flex justify-between font-pixel text-[10px] mt-1">
+          <span className="text-neon-yellow">GLV {gameLevel}</span>
+          <span className="text-neon-yellow">🎯 {stats.levelCoinsEarned}/{levelTarget}</span>
+        </div>
+        <div className="h-2 w-full bg-terminal border-2 border-border overflow-hidden">
+          <div className="h-full bg-[var(--neon-yellow)] transition-all" style={{ width: `${targetPct}%`, boxShadow: "0 0 8px var(--neon-yellow)" }} />
         </div>
       </div>
       <Stat label="Coins" value={`🪙 ${stats.coins}`} color="text-neon-yellow" />

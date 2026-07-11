@@ -73,7 +73,7 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); font-family: var(--font-term); }
+  html, body { height: 100%; overflow: hidden; background-color: var(--color-background); color: var(--color-foreground); font-family: var(--font-term); }
   body { -webkit-font-smoothing: none; image-rendering: pixelated; }
 }
 
@@ -120,11 +120,19 @@
 }
 
 @keyframes shake {
-  0%,100% { transform: translate(0,0); }
-  20% { transform: translate(-5px, 3px); }
-  40% { transform: translate(5px, -3px); }
-  60% { transform: translate(-4px, -4px); }
-  80% { transform: translate(4px, 4px); }
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  20% { transform: translate(-5px, 3px) rotate(-1deg); }
+  40% { transform: translate(5px, -3px) rotate(1deg); }
+  60% { transform: translate(-4px, -4px) rotate(-0.5deg); }
+  80% { transform: translate(4px, 4px) rotate(0.5deg); }
+}
+@keyframes heavy-shake {
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  15% { transform: translate(-12px, 8px) rotate(-2deg); }
+  30% { transform: translate(10px, -8px) rotate(2deg); }
+  45% { transform: translate(-8px, -6px) rotate(-1.5deg); }
+  60% { transform: translate(10px, 6px) rotate(1deg); }
+  75% { transform: translate(-6px, 4px) rotate(-1deg); }
 }
 @keyframes float-up {
   0% { transform: translateY(0); opacity: 1; }
@@ -143,9 +151,35 @@
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
-.animate-shake { animation: shake 0.4s ease-in-out; }
-.animate-float-up { animation: float-up 1s ease-out forwards; }
-.animate-flash-red { animation: flash-red 0.6s ease-in-out; }
+/* Screen burn / heat distortion when tilting */
+@keyframes screen-burn {
+  0%   { box-shadow: inset 0 0 0px  rgba(255,80,0,0); }
+  50%  { box-shadow: inset 0 0 80px rgba(255,80,0,0.35); }
+  100% { box-shadow: inset 0 0 40px rgba(255,80,0,0.2); }
+}
+/* Screen crack flash */
+@keyframes crack-flash {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+/* Narrator slide-in */
+@keyframes slide-down {
+  from { transform: translateY(-120%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.animate-shake       { animation: shake 0.4s ease-in-out; }
+.animate-heavy-shake { animation: heavy-shake 0.6s ease-in-out; }
+.animate-float-up    { animation: float-up 1s ease-out forwards; }
+.animate-flash-red   { animation: flash-red 0.6s ease-in-out; }
 .animate-flash-green { animation: flash-green 0.5s ease-in-out; }
-.animate-blink { animation: blink 1s steps(2) infinite; }
-.animate-marquee { animation: scroll-marquee 22s linear infinite; }
+.animate-blink       { animation: blink 1s steps(2) infinite; }
+.animate-marquee     { animation: scroll-marquee 22s linear infinite; }
+.animate-slide-down  { animation: slide-down 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Tilt level overlays (applied to the root game div) */
+.tilt-1 { animation: screen-burn 2s ease-in-out infinite; }
+.tilt-2 { animation: screen-burn 1.2s ease-in-out infinite; box-shadow: inset 0 0 60px rgba(255,40,0,0.3); }
+.tilt-3 { animation: screen-burn 0.8s ease-in-out infinite; box-shadow: inset 0 0 100px rgba(255,0,0,0.5); filter: saturate(1.8) contrast(1.1); }

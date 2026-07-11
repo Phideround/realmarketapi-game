@@ -63,4 +63,5 @@ export type Stats = {
   survivalMs: number;
   mode: MarketMode;
   gameOver: boolean;
+  levelCoinsEarned: number;
 };

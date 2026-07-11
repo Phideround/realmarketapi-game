@@ -20,9 +20,20 @@ export const EVENT_POOL: Array<() => GameEvent> = [
   () => ({ id: rid(), kind: "MM_TRAP", title: "🕳️ STOP HUNT", subtitle: "Wicks incoming", bias: -0.7, volMult: 2.5, ttl: 4 }),
   () => ({ id: rid(), kind: "SHORT_SQUEEZE", title: "🎢 GAMMA SQUEEZE", subtitle: "Dealer hedging spiral", bias: 1.7, volMult: 2.7, ttl: 6 }),
   () => ({ id: rid(), kind: "ELON", title: "🤖 AI HYPE CYCLE", subtitle: "Everything is AI now", bias: 1.5, volMult: 2, ttl: 6 }),
-  () => ({ id: rid(), kind: "ELON", title: "🧠 MEMECOIN MANIA", subtitle: "Doge, Pepe, Wojak…", bias: 1.3, volMult: 2.8, ttl: 5 }),
-  () => ({ id: rid(), kind: "CPI", title: "🛢️ OIL SHOCK", subtitle: "OPEC surprise cut", bias: 1, volMult: 2.4, ttl: 5 }),
-  () => ({ id: rid(), kind: "CPI", title: "🌐 GEOPOLITICAL RISK", subtitle: "Risk-off across the board", bias: -1.2, volMult: 2.6, ttl: 6 }),
+  () => ({ id: rid(), kind: "ELON",        title: "🤡 MEMECOIN MANIA",       subtitle: "Doge, Pepe, Wojak…",                   bias: 1.3,  volMult: 2.8, ttl: 5 }),
+  () => ({ id: rid(), kind: "CPI",          title: "🛢️ OIL SHOCK",             subtitle: "OPEC surprise cut",                    bias: 1,    volMult: 2.4, ttl: 5 }),
+  () => ({ id: rid(), kind: "CPI",          title: "🌐 GEOPOLITICAL RISK",      subtitle: "Risk-off across the board",            bias: -1.2, volMult: 2.6, ttl: 6 }),
+  // New events
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🎩 MANIPULATION WEEK",     subtitle: "Market makers playing both sides",     bias: (Math.random()-0.5)*3, volMult: 3.5, ttl: 10 }),
+  () => ({ id: rid(), kind: "ELON",         title: "📱 WE'RE WATCHING YOUR MOBILE", subtitle: "Your data sold. Market moved.",    bias: -1.0, volMult: 2.0, ttl: 5 }),
+  () => ({ id: rid(), kind: "LIQUIDATION",  title: "🤡 CLOWN CANDLE",          subtitle: "Nobody knows why. Classic crypto.",    bias: (Math.random()-0.5)*4, volMult: 5, ttl: 4 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🔄 FAKEOUT DETECTED",       subtitle: "Stop hunted. Again.",                 bias: -(Math.random()*1.5+0.5), volMult: 2.2, ttl: 5 }),
+  () => ({ id: rid(), kind: "CPI",          title: "💤 BORING MARKET",          subtitle: "Everyone’s asleep… or are they?",      bias: 0,    volMult: 0.5, ttl: 8 }),
+  () => ({ id: rid(), kind: "WHALE",        title: "🦖 DEAD CAT BOUNCE",        subtitle: "Is this the bottom? (No)",            bias: 0.8,  volMult: 2.0, ttl: 5 }),
+  () => ({ id: rid(), kind: "LIQUIDATION",  title: "🏦 BANK RUN FEAR",          subtitle: "Panic withdrawal detected",           bias: -1.8, volMult: 3.0, ttl: 6 }),
+  () => ({ id: rid(), kind: "ELON",         title: "🍕 LUNCH BREAK PUMP",       subtitle: "Bored traders buying dips",           bias: 1.0,  volMult: 1.4, ttl: 4 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🧾 WASH TRADING ALERT",     subtitle: "Volume is fake. Prices real.",        bias: (Math.random()-0.5)*2, volMult: 1.8, ttl: 5 }),
+  () => ({ id: rid(), kind: "CPI",          title: "🧬 ALGO MALFUNCTION",       subtitle: "Trading bots arguing",               bias: (Math.random()-0.5)*3, volMult: 4.0, ttl: 5 }),
 ];
 
 export const BOSSES = [
@@ -70,6 +81,22 @@ export const NEWS_TICKER = [
   "Funding rates negative across majors",
   "Open interest at all-time highs",
   "MicroStrategy adds to stack",
+  // Memes
+  "😂 I'm trading crypto because I'm broke. I'm broke because I'm trading crypto.",
+  "💼 McDonald's is hiring. Your move.",
+  "🍕 Sir, this is a Wendy's. But I'll take your order.",
+  "🚀 When crypto pumps: I'm a genius. When it dumps: the market is wrong.",
+  "📉 Bought the dip. It dipped again. Bought again. Still dipping…",
+  "🤔 Just ONE more trade. Just ONE more. Okay one more after this.",
+  "📝 Loss = learning opportunity (according to my therapist)",
+  "🏁 Zoom out bro. Just zoom out.",
+  "🪙 My portfolio is a horror movie and I'm the villain.",
+  "👨‍💻 Wife sold house. Bought DOGE at 0.70. Classic.",
+  "👹 The market can stay irrational longer than you can stay solvent.",
+  "🪀 WAGMI... right? RIGHT?!",
+  "🔥 This is fine. Everything is fine. (chart goes vertical)",
+  "⚠️ Not financial advice. But if it was, still not responsible.",
+  "🤯 Stonks only go up (source: made it up)",
 ];
 
 export function rollEvent(): GameEvent {
@@ -93,3 +120,30 @@ export function rollBoss(): GameEvent {
 export function rollNewsTicker(): string {
   return NEWS_TICKER[Math.floor(Math.random() * NEWS_TICKER.length)];
 }
+
+// ── Streak narrator lines ─────────────────────────────────────────────────────
+export const STREAK_NARRATOR: Record<number, string[]> = {
+  3:  ["🔥 You're reading the market perfectly!", "💡 Pattern recognition: UNLOCKED", "🎯 Three in a row! You've got this!"],
+  5:  ["💎 Diamond hands AND a diamond mind!", "🚀 Five wins! Are you even human?", "📈 The market bows to you right now!"],
+  7:  ["👑 LEGENDARY! The charts fear you!", "⚡ Seven-win streak. Chefs kiss.", "🌟 You're in the ZONE. Don't stop!"],
+  10: ["🏆 TEN WINS. Call your mom. She'd be proud.", "🤖 Are you a trading bot? This is illegal.", "🥇 x10 COMBO. Retire already!"],
+  15: ["🦍 APE BRAIN ASCENDED. Pure instinct.", "🌍 The market is your puppet right now.", "🎰 At this point you're just cheating."],
+};
+
+export function rollNarratorLine(combo: number): string | null {
+  const milestones = [15, 10, 7, 5, 3];
+  for (const m of milestones) {
+    if (combo === m) {
+      const lines = STREAK_NARRATOR[m];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+  }
+  return null;
+}
+
+// ── Tilt lines (consecutive losses) ──────────────────────────────────────────
+export const TILT_LINES: Record<number, string[]> = {
+  3: ["😤 Three losses. Breathe.", "💢 The market is testing you.", "📉 Bad run — stay disciplined."],
+  5: ["🔥 PC OVERHEATING. Fan at max.", "😡 FIVE losses. Walk away.", "💀 Tilt detected. Danger zone."],
+  7: ["💥 YOUR MONITOR CRACKS. Keep going?", "🩸 Seven losses. The screen bleeds.", "🔨 You just punched the keyboard."],
+};

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createSimulatedFeed, type MarketFeed } from "./market";
 import type { Candle, FloatingText, GameEvent, MarketMode, Prediction, Stats } from "./types";
-import { rollBoss, rollEvent, rollNewsTicker } from "./events";
+import { rollBoss, rollEvent, rollNewsTicker, rollNarratorLine, TILT_LINES } from "./events";
 import { sfx } from "./sfx";
 
 const MODES: MarketMode[] = ["BULL", "BEAR", "SIDEWAYS", "HIGH_VOL", "MEME", "BLACK_SWAN"];
 const INITIAL_CANDLES = 40;
+const BASE_TARGET = 120; // coins needed at game-level 1; scales exponentially
+// levelTarget = BASE_TARGET * level * (1 + (level-1)*0.3)
 
 type Pending = { dir: Exclude<Prediction, "SKIP">; entry: number; at: number } | null;
 
@@ -31,13 +33,44 @@ export function useGame() {
   const [scanlines, setScanlines] = useState(true);
   const [paused, setPaused] = useState(false);
   const [news, setNews] = useState<string[]>(["Welcome to Pixel Trader — predict the next candle."]);
+  const [tiltLevel, setTiltLevel] = useState(0); // 0=ok, 1=warm, 2=hot, 3=on fire
+
+  // ── Level / Artifact state ──────────────────────────────────────────────────
+  const [gameLevel, setGameLevel] = useState(1);
+  const [levelReached, setLevelReached] = useState(false);
+  const [activeArtifacts, setActiveArtifacts] = useState<string[]>([]);
+  const artifactsRef = useRef<string[]>([]);
+  const gameLevelRef = useRef(1);
+
+  // Per-run artifact effect counters (refs = no re-render needed)
+  const shieldUsedRef = useRef(0);          // b_shield / bu_shield2: remaining free blocks
+  const immortalRemainingRef = useRef(0);
+  const freeCoffeeLevelsRef = useRef(0);
+  const phoenixUsedRef = useRef(0);          // p_phoenix: 0 = unused, pu_phoenix can be 2
+  const consecutiveLossesRef = useRef(0);   // g_reversal tracking
+  const reversalReadyRef = useRef(false);   // g_reversal: next win heals
+  const totalTradesRef = useRef(0);         // b_time_stop, p_compound tracking
+  const compoundWinsRef = useRef(0);        // p_compound: wins this block of 10
+  const firstTradeRef = useRef(true);       // w_focus: first trade guaranteed win
+  const hpLossMultRef = useRef(1.0);        // difficulty scaler
+  const eventIntervalBaseRef = useRef(16000);
+
+  // TP/SL intra-candle check
+  const pendingRef = useRef<Pending>(null);
+  const tpSlTriggeredRef = useRef(false);
+  const pendingEnterCandleRef = useRef<number>(-1); // candle `t` when trade was entered
+
+  // Gear items from the shop — updated from index.tsx
+  const ownedItemsRef = useRef<string[]>([]);
+  const setOwnedItems = useCallback((items: string[]) => {
+    ownedItemsRef.current = items;
+  }, []);
 
   const startRef = useRef(Date.now());
   const lastEventRef = useRef(Date.now());
   const lastBossRef = useRef(Date.now());
   const lastDiffRef = useRef(Date.now());
   const lastTickerRef = useRef(Date.now());
-  // Track pending timeouts so we can clean them up on unmount / reset
   const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const trackedTimeout = useCallback((fn: () => void, ms: number) => {
@@ -53,6 +86,9 @@ export function useGame() {
     timeoutsRef.current.forEach((id) => clearTimeout(id));
     timeoutsRef.current.clear();
   }, []);
+
+  // Keep pendingRef in sync for intra-candle TP/SL check
+  useEffect(() => { pendingRef.current = pending; }, [pending]);
 
   const pushFloat = useCallback((text: string, color: string) => {
     const f: FloatingText = {
@@ -76,22 +112,113 @@ export function useGame() {
       const delta = closed.close - p.entry;
       const win = (p.dir === "LONG" && delta > 0) || (p.dir === "SHORT" && delta < 0);
       setStats((s) => {
+        const arts = artifactsRef.current;
+        const gear = ownedItemsRef.current;
         const pnl = Math.abs(delta / p.entry) * 1000 * (1 + s.combo * 0.05);
         let ns = { ...s };
-        if (win) {
-          const streakTier = Math.floor(ns.combo / 3); // every 3 wins = tier bump
-          const streakMult = 1 + streakTier * 0.35;
-          const gain = Math.round(pnl * streakMult);
+        totalTradesRef.current++;
+
+        // w_focus: first trade of level guaranteed win
+        const effectiveWin = win || (firstTradeRef.current && arts.includes("w_focus"));
+        // b_time_stop: every 8th trade = automatic free turn (skip resolution)
+        const isFreeTurn = arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0;
+        // p_the_algo: 10% auto-win chance
+        const algoWin = !win && arts.includes("p_the_algo") && Math.random() < 0.10;
+        // quant shop item: every 5th trade auto-wins
+        const quantWin = !win && gear.includes("quant") && totalTradesRef.current % 5 === 0;
+        // char_ai: every 12th trade auto-wins
+        const charAiWin = !win && gear.includes("char_ai") && totalTradesRef.current % 12 === 0;
+        // b_leverage: amplifies both gains and losses
+        const hasLeverage = arts.includes("b_leverage");
+
+        if (firstTradeRef.current) firstTradeRef.current = false;
+
+        if (isFreeTurn) {
+          pushFloat("⏸️ TIME STOP", "var(--neon-blue)");
+          return ns; // skip this trade entirely
+        }
+
+        if (effectiveWin || algoWin || quantWin || charAiWin) {
+          if (algoWin && !win)  pushFloat("🤖 ALGO WIN!", "var(--neon-magenta)");
+          if (quantWin)         pushFloat("🧠 QUANT WIN!", "var(--neon-blue)");
+          if (charAiWin)        pushFloat("🤖 AI WIN!", "var(--neon-blue)");
+          const streakTier = Math.floor(ns.combo / 3);
+          // streak multiplier — boosted by artifacts + chars
+          let streakMult = 1 + streakTier * 0.35;
+          if (arts.includes("g_streak"))  streakMult *= 1.10;
+          if (arts.includes("gu_streak")) streakMult *= 1.20; // upgrade
+          if (arts.includes("b_oracle"))  streakMult *= 1.25;
+          if (gear.includes("char_swing")) streakMult *= 1.10;
+
+          let gain = Math.round(pnl * streakMult);
+          if (arts.includes("p_godmode"))   gain = Math.round(gain * 1.40);
+          if (arts.includes("b_leverage"))  gain = Math.round(gain * 1.50);
+          if (gear.includes("char_scalper")) gain = Math.round(gain * 1.05);
+          if (gear.includes("char_day"))    gain = Math.round(gain * 1.05);
+          // Degen: on wins, 50% chance to double
+          if (gear.includes("char_degen") && Math.random() < 0.5) gain *= 2;
+          // Pet bonuses
+          if (gear.includes("pet_frog")  && p.dir === "LONG")  gain = Math.round(gain * 1.06);
+          if (gear.includes("pet_whale") && pnl > 60) gain = Math.round(gain * 1.10);
+
           ns.wins += 1;
           ns.combo += 1;
           ns.bestCombo = Math.max(ns.bestCombo, ns.combo);
-          const coinGain = 5 + Math.floor(ns.combo * 1.5) + streakTier * 4;
+          compoundWinsRef.current++;
+
+          let coinGain = 5 + Math.floor(ns.combo * 1.5) + streakTier * 4;
+          if (arts.includes("b_double_coins")) coinGain = Math.round(coinGain * 1.80);
+          if (arts.includes("bu_double"))      coinGain = Math.round(coinGain * 2.50);
+          if (arts.includes("b_momentum"))    coinGain += 4 + Math.floor(ns.combo * 0.5);
+          if (arts.includes("g_coin_bonus"))  coinGain += 4;
+          if (arts.includes("g_journal") && ns.accuracy > 60) coinGain = Math.round(coinGain * 1.20);
+          if (gear.includes("cat"))           coinGain = Math.round(coinGain * 1.10);
+          if (gear.includes("pet_cat"))       coinGain = Math.round(coinGain * 1.10);
+          if (gear.includes("pet_bull"))      coinGain = Math.round(coinGain * 1.15);
+          if (gear.includes("desk"))          coinGain = Math.round(coinGain * 1.20);
+          if (gear.includes("hedge"))         coinGain = Math.round(coinGain * 1.50);
+          if (gear.includes("mouse"))         coinGain = Math.round(coinGain * 1.05);
+          if (gear.includes("fiber"))         coinGain += 2;
+          if (gear.includes("kb"))            coinGain += Math.max(0, streakTier);
+          if (gear.includes("char_crypto_max") && (ns.mode === "MEME" || ns.mode === "HIGH_VOL")) coinGain = Math.round(coinGain * 1.20);
+          if (gear.includes("pet_dragon") && ns.combo >= 5) coinGain = Math.round(coinGain * 1.25);
+          // quant: every 5th trade is auto-resolved \u2014 bonus coins on those trades
+          if (gear.includes("quant") && totalTradesRef.current % 5 === 0) coinGain = Math.round(coinGain * 2);
+
           ns.coins += coinGain;
-          ns.xp += 10 + ns.combo * 2 + streakTier * 5;
+          ns.levelCoinsEarned += coinGain;
+
+          let xpGain = 10 + ns.combo * 2 + streakTier * 5;
+          if (arts.includes("w_xp")) xpGain = Math.round(xpGain * 1.20);
+          ns.xp += xpGain;
           ns.profit += gain;
           ns.balance += gain;
-          // Streak heals & big streak burst
+
+          // Heals
           if (ns.combo % 5 === 0) ns.hp = Math.min(ns.maxHp, ns.hp + 8);
+          if (arts.includes("g_combo_heal")) ns.hp = Math.min(ns.maxHp, ns.hp + 2);
+          if (arts.includes("b_lifesteal"))  ns.hp = Math.min(ns.maxHp, ns.hp + 3);
+          if (gear.includes("pet_shark"))    ns.hp = Math.min(ns.maxHp, ns.hp + 5);
+
+          // g_reversal: next win after 3 consecutive losses heals +20
+          if (reversalReadyRef.current) {
+            reversalReadyRef.current = false;
+            ns.hp = Math.min(ns.maxHp, ns.hp + 20);
+            pushFloat("🔄 REVERSAL +20 HP!", "var(--neon-green)");
+          }
+          consecutiveLossesRef.current = 0;
+
+          // Lucky Socks: heal on streak 3
+          if (gear.includes("luckysocks") && ns.combo >= 3) ns.hp = Math.min(ns.maxHp, ns.hp + 2);
+
+          // p_compound: every 10 wins bonus
+          if (compoundWinsRef.current >= 10) {
+            compoundWinsRef.current = 0;
+            ns.coins += 100;
+            ns.levelCoinsEarned += 100;
+            pushFloat("📉 COMPOUND +100", "var(--neon-yellow)");
+          }
+
           sfx.win(); sfx.coin();
           pushFloat(`+$${gain}`, "var(--neon-green)");
           if (ns.combo >= 3) pushFloat(`x${ns.combo} STREAK`, "var(--neon-yellow)");
@@ -100,31 +227,193 @@ export function useGame() {
             addNews(`🔥 Streak tier ${streakTier + 1} — payouts x${streakMult.toFixed(2)}`);
           }
           setFlash("green");
+
+          // Level-up check
+          const target = Math.round(BASE_TARGET * gameLevelRef.current * (1 + (gameLevelRef.current - 1) * 0.3));
+          if (ns.levelCoinsEarned >= target && !ns.gameOver) {
+            setLevelReached(true);
+            setPaused(true);
+            pushFloat("🏆 LEVEL UP!", "var(--neon-yellow)");
+            addNews(`🏆 Target reached — Level ${gameLevelRef.current + 1} unlocked!`);
+          }
         } else {
           const loss = Math.round(pnl * 0.6);
-          const hpLoss = 10 + Math.min(15, Math.floor(pnl / 40));
+          let hpLoss = Math.round((10 + Math.min(15, Math.floor(pnl / 40))) * hpLossMultRef.current);
+          if (arts.includes("g_rr"))   hpLoss = Math.round(hpLoss * 0.80);
+          if (arts.includes("gu_rr"))  hpLoss = Math.round(hpLoss * 0.65); // upgrade
+          if (freeCoffeeLevelsRef.current > 0) hpLoss = Math.round(hpLoss * 0.60);
+          if (arts.includes("wu_coffee")) freeCoffeeLevelsRef.current > 0 && (hpLoss = Math.round(hpLoss * 0.50));
+          if (gear.includes("hands"))  hpLoss = Math.round(hpLoss * 0.75);
+          if (gear.includes("coffee"))    hpLoss = Math.round(hpLoss * 0.92);
+          if (gear.includes("therapist")) hpLoss = Math.round(hpLoss * 0.85);
+          // b_leverage: amplified HP loss
+          if (hasLeverage) hpLoss = Math.round(hpLoss * 1.30);
+          // char_degen: 50% chance to double HP loss
+          if (gear.includes("char_degen") && Math.random() < 0.5) hpLoss = Math.round(hpLoss * 2);
+          // g_insurance: cut damage in half when low HP
+          if (arts.includes("g_insurance") && ns.hp < 25) hpLoss = Math.round(hpLoss * 0.5);
+          // pet_bear: -6% HP loss on SHORT losses
+          if (gear.includes("pet_bear") && p.dir === "SHORT") hpLoss = Math.round(hpLoss * 0.94);
+
           ns.losses += 1;
-          if (ns.combo >= 3) addNews(`💔 Streak broken at x${ns.combo}`);
-          ns.combo = 0;
-          ns.hp = Math.max(0, ns.hp - hpLoss);
+          consecutiveLossesRef.current++;
+          if (arts.includes("g_reversal") && consecutiveLossesRef.current >= 3) {
+            reversalReadyRef.current = true;
+            pushFloat("🔄 REVERSAL READY", "var(--neon-blue)");
+          }
+
+          // Shield
+          const shieldsLeft = shieldUsedRef.current;
+          if (shieldsLeft > 0) {
+            shieldUsedRef.current = shieldsLeft - 1;
+            pushFloat(`🛡️ SHIELD (${shieldsLeft - 1} left)`, "var(--neon-blue)");
+          } else if (arts.includes("p_greed")) {
+            // Streak drops to half instead of 0
+            if (ns.combo >= 3) addNews(`∞ Greed: streak ${ns.combo} → ${Math.floor(ns.combo / 2)}`);
+            ns.combo = Math.floor(ns.combo / 2);
+            pushFloat("∞ GREED!", "var(--neon-magenta)");
+          } else {
+            if (ns.combo >= 3) addNews(`💔 Streak broken at x${ns.combo}`);
+            ns.combo = 0;
+          }
+
+          // Immortal / Dark Pool
+          if (immortalRemainingRef.current > 0) {
+            immortalRemainingRef.current--;
+            pushFloat(`💎 IMMORTAL (${immortalRemainingRef.current} left)`, "var(--neon-blue)");
+          } else if (gear.includes("dark_pool") && totalTradesRef.current <= 10) {
+            pushFloat("🌑 DARK POOL", "var(--neon-magenta)");
+          } else {
+            ns.hp = Math.max(0, ns.hp - hpLoss);
+            pushFloat(`-${hpLoss} HP`, "var(--neon-red)");
+          }
+
+          // w_bandage: small heal on loss
+          if (arts.includes("w_bandage")) ns.hp = Math.min(ns.maxHp, ns.hp + 3);
+
           ns.profit = Math.max(0, ns.profit - loss);
           ns.balance = Math.max(0, ns.balance - loss);
           sfx.lose();
-          pushFloat(`-${hpLoss} HP`, "var(--neon-red)");
           setFlash("red");
           setShake(true);
           trackedTimeout(() => setShake(false), 400);
         }
+
         ns.level = xpToLevel(ns.xp);
         const total = ns.wins + ns.losses;
         ns.accuracy = total ? Math.round((ns.wins / total) * 100) : 0;
-        if (ns.hp <= 0) { ns.gameOver = true; setPaused(true); }
+
+        if (ns.hp <= 0) {
+          const maxRevives = arts.includes("pu_phoenix") ? 2 : arts.includes("p_phoenix") ? 1 : 0;
+          if (phoenixUsedRef.current < maxRevives) {
+            phoenixUsedRef.current++;
+            ns.hp = arts.includes("pu_phoenix") ? 75 : 60;
+            pushFloat("🦅 PHOENIX REVIVAL!", "var(--neon-magenta)");
+            addNews("🦅 Phoenix Soul activates — revived!");
+          } else {
+            ns.gameOver = true;
+            setPaused(true);
+          }
+        }
+
+        // ── Narrator (streak highs) ───────────────────────────────────────────
+        if (win || algoWin || quantWin || charAiWin) {
+          const line = rollNarratorLine(ns.combo);
+          if (line) {
+            addNews(`🎙️ ${line}`);
+            sfx.streak(ns.combo);
+          }
+        }
+
+        // ── Tilt tracking (consecutive losses) ───────────────────────────────
+        const consLoss = consecutiveLossesRef.current;
+        const newTilt = consLoss >= 7 ? 3 : consLoss >= 5 ? 2 : consLoss >= 3 ? 1 : 0;
+        setTiltLevel(newTilt);
+        if (newTilt > 0 && !win && consLoss === [3,5,7][newTilt - 1]) {
+          const lines = TILT_LINES[consLoss as keyof typeof TILT_LINES];
+          if (lines) addNews(`💢 ${lines[Math.floor(Math.random() * lines.length)]}`);
+          if (newTilt >= 2) sfx.tilt();
+          if (newTilt >= 2) { setShake(true); trackedTimeout(() => setShake(false), 700); }
+        }
+        if (win) setTiltLevel(0);
+
+        // ── Girlfriend effect: steals attention, makes next loss worse ────────
+        if (gear.includes("girlfriend") && !win && Math.random() < 0.4) {
+          addNews("💃 Girlfriend called. You missed the move.");
+          pushFloat("💃 DISTRACTED!", "var(--neon-magenta)");
+        }
+
         trackedTimeout(() => setFlash(null), 400);
         return ns;
       });
       return null;
     });
   }, [pushFloat, trackedTimeout, addNews]);
+
+  // ── Add artifact ─────────────────────────────────────────────────────────────
+  const addArtifact = useCallback((id: string) => {
+    if (artifactsRef.current.includes(id)) return;
+    artifactsRef.current = [...artifactsRef.current, id];
+    setActiveArtifacts(artifactsRef.current);
+    if (id === "w_maxhp") {
+      setStats((s) => ({ ...s, maxHp: s.maxHp + 12, hp: Math.min(s.maxHp + 12, s.hp + 12) }));
+    }
+    if (id === "p_slow") {
+      const f = feedRef.current;
+      if (f) f.setSpeedMs(Math.round(f.getSpeedMs() * 1.25));
+    }
+    if (id === "p_immortal")  immortalRemainingRef.current = 4;
+    if (id === "pu_immortal") immortalRemainingRef.current = 7;
+    if (id === "p_phoenix" || id === "pu_phoenix") phoenixUsedRef.current = 0;
+    if (id === "w_coffee")  freeCoffeeLevelsRef.current += 3;
+    if (id === "wu_coffee") freeCoffeeLevelsRef.current += 5;
+    if (id === "b_shield")  shieldUsedRef.current = 1;
+    if (id === "bu_shield2") shieldUsedRef.current = 2;
+    if (id === "w_focus") firstTradeRef.current = true;
+  }, []);
+
+  // ── Advance to next game-level ────────────────────────────────────────────────
+  const nextLevel = useCallback(() => {
+    const f = feedRef.current!;
+    // Speed up candles more aggressively at higher levels
+    const speedCut = 200 + gameLevelRef.current * 20;
+    f.setSpeedMs(Math.max(300, f.getSpeedMs() - speedCut));
+    // Events more frequent
+    eventIntervalBaseRef.current = Math.max(4000, eventIntervalBaseRef.current - 2500);
+    // Difficulty ramp: +20% HP loss per level (capped at 3x)
+    hpLossMultRef.current = Math.min(3.0, 1.0 + gameLevelRef.current * 0.20);
+
+    setLevelReached(false);
+    // Per-level resets
+    if (artifactsRef.current.includes("bu_shield2")) shieldUsedRef.current = 2;
+    else if (artifactsRef.current.includes("b_shield")) shieldUsedRef.current = 1;
+    else shieldUsedRef.current = 0;
+
+    if (artifactsRef.current.includes("pu_immortal")) immortalRemainingRef.current = 7;
+    else if (artifactsRef.current.includes("p_immortal")) immortalRemainingRef.current = 4;
+    else immortalRemainingRef.current = 0;
+
+    if (freeCoffeeLevelsRef.current > 0) freeCoffeeLevelsRef.current--;
+    consecutiveLossesRef.current = 0;
+    reversalReadyRef.current = false;
+    totalTradesRef.current = 0;
+    compoundWinsRef.current = 0;
+    firstTradeRef.current = artifactsRef.current.includes("w_focus");
+
+    const newLevel = gameLevelRef.current + 1;
+    gameLevelRef.current = newLevel;
+    setGameLevel(newLevel);
+    const arts = artifactsRef.current;
+    setStats((s) => {
+      let ns = { ...s, levelCoinsEarned: 0 };
+      if (arts.includes("wu_hp"))          ns.hp = Math.min(ns.maxHp, ns.hp + 25 * newLevel);
+      else if (arts.includes("w_hp"))      ns.hp = Math.min(ns.maxHp, ns.hp + 15 * newLevel);
+      if (arts.includes("w_coins"))        ns.coins += 15 * newLevel;
+      if (arts.includes("g_coffee_addict")) ns.coins += 40;
+      return ns;
+    });
+    addNews(`⚡ Level ${newLevel} — candles faster, market wilder! HP loss x${hpLossMultRef.current.toFixed(1)}`);
+  }, [addNews]);
 
   // Main game loop (RAF)
   const pausedRef = useRef(paused);
@@ -138,8 +427,38 @@ export function useGame() {
       last = now;
       if (!pausedRef.current && feedRef.current) {
         const closed = feedRef.current.next(dt);
-        if (closed) resolvePending(closed);
+        if (closed) {
+          const p = pendingRef.current;
+          // Skip the candle that was forming when the trade was entered.
+          // Its close might predate or immediately follow entry — resolving it
+          // causes the "instant loss" bug. Trades evaluate on the NEXT full candle.
+          if (p && closed.t === pendingEnterCandleRef.current) {
+            pendingEnterCandleRef.current = -1; // mark entry candle as passed
+          } else if (!tpSlTriggeredRef.current) {
+            resolvePending(closed);
+          }
+          tpSlTriggeredRef.current = false;
+        }
         setTick((t) => (t + 1) & 0xffff);
+
+        // Intra-candle TP/SL check
+        // Skip the candle on which the trade was entered — its high/low predates the entry price
+        const p = pendingRef.current;
+        if (p && !tpSlTriggeredRef.current) {
+          const cur = feedRef.current.peek();
+          if (cur.t !== pendingEnterCandleRef.current) {
+            const isLong = p.dir === "LONG";
+            const tp = p.entry * (isLong ? 1.015 : 0.985);
+            const sl = p.entry * (isLong ? 0.990 : 1.010);
+            const tpHit = isLong ? cur.high >= tp : cur.low <= tp;
+            const slHit = isLong ? cur.low <= sl : cur.high >= sl;
+            if (tpHit || slHit) {
+              tpSlTriggeredRef.current = true;
+              const synthClose = tpHit ? tp : sl;
+              resolvePending({ ...cur, close: synthClose });
+            }
+          }
+        }
 
         const nowMs = Date.now();
         setStats((s) => s.survivalMs === nowMs - startRef.current ? s : { ...s, survivalMs: nowMs - startRef.current });
@@ -151,7 +470,7 @@ export function useGame() {
           addNews("⚡ Difficulty increased — candles speed up.");
         }
 
-        if (nowMs - lastEventRef.current > 16000 + Math.random() * 12000) {
+        if (nowMs - lastEventRef.current > eventIntervalBaseRef.current + Math.random() * 12000) {
           lastEventRef.current = nowMs;
           const e = rollEvent();
           setEvent(e);
@@ -201,7 +520,10 @@ export function useGame() {
       return;
     }
     const feed = feedRef.current!;
-    const entry = feed.peek().close;
+    const cur = feed.peek();
+    const entry = cur.close;
+    tpSlTriggeredRef.current = false;
+    pendingEnterCandleRef.current = cur.t; // remember which candle we entered on
     setPending({ dir: p, entry, at: Date.now() });
   }, [stats.gameOver]);
 
@@ -216,6 +538,23 @@ export function useGame() {
     setPaused(false);
     setFlash(null);
     setShake(false);
+    setGameLevel(1);
+    gameLevelRef.current = 1;
+    setLevelReached(false);
+    setTiltLevel(0);
+    artifactsRef.current = [];
+    setActiveArtifacts([]);
+    shieldUsedRef.current = 0;
+    immortalRemainingRef.current = 0;
+    freeCoffeeLevelsRef.current = 0;
+    phoenixUsedRef.current = 0;
+    consecutiveLossesRef.current = 0;
+    reversalReadyRef.current = false;
+    totalTradesRef.current = 0;
+    compoundWinsRef.current = 0;
+    firstTradeRef.current = false;
+    hpLossMultRef.current = 1.0;
+    eventIntervalBaseRef.current = 16000;
     startRef.current = Date.now();
     lastEventRef.current = Date.now();
     lastBossRef.current = Date.now();
@@ -228,11 +567,30 @@ export function useGame() {
     setStats((s) => ({ ...s, coins: Math.max(0, s.coins - n) }));
   }, []);
 
+  const addCoins = useCallback((n: number) => {
+    setStats((s) => ({ ...s, coins: s.coins + n, levelCoinsEarned: s.levelCoinsEarned + n }));
+    pushFloat(`+${n} 🪙 MISSION!`, "var(--neon-yellow)");
+  }, [pushFloat]);
+
+  /** Apply one-time effect of a purchased shop item (used for consumables). */
+  const applyItemEffect = useCallback((id: string) => {
+    if (id === "hp_potion") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 25) }));
+      pushFloat("+25 HP", "var(--neon-green)");
+    }
+  }, [pushFloat]);
+
   const feed = feedRef.current!;
+  const levelTarget = Math.round(BASE_TARGET * gameLevel * (1 + (gameLevel - 1) * 0.3));
   return useMemo(() => ({
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
-    setScanlines, setPaused, predict, reset, spendCoins,
-  }), [feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick, predict, reset, spendCoins]);
+    gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
+    setScanlines, setPaused, predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
+  }), [
+    feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
+    gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
+    predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
+  ]);
 }
 
 function initialStats(): Stats {
@@ -241,5 +599,6 @@ function initialStats(): Stats {
     xp: 0, level: 1, combo: 0, bestCombo: 0,
     wins: 0, losses: 0, skips: 0, accuracy: 0,
     reactionMs: 0, survivalMs: 0, mode: "SIDEWAYS", gameOver: false,
+    levelCoinsEarned: 0,
   };
 }

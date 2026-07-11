@@ -2,9 +2,9 @@
   "version": 1,
   "asset_id": "9158c3f8-8b94-4f33-b0e4-db336700c174",
   "project_id": "9f27829e-2cf8-4781-bb7f-bf185dd3c216",
-  "url": "/__l5e/assets-v1/9158c3f8-8b94-4f33-b0e4-db336700c174/realmarketapi-logo.png",
-  "r2_key": "a/v1/9f27829e-2cf8-4781-bb7f-bf185dd3c216/9158c3f8-8b94-4f33-b0e4-db336700c174/realmarketapi-logo.png",
-  "original_filename": "realmarketapi-logo.png",
+  "url": "/logo.png",
+  "r2_key": "/logo.png",
+  "original_filename": "logo.png",
   "size": 104720,
   "content_type": "image/png",
   "created_at": "2026-07-11T02:48:37Z"
