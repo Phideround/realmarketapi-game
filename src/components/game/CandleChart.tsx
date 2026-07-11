@@ -1,9 +1,15 @@
 import { useEffect, useRef } from "react";
 import type { MarketFeed } from "@/game/market";
 
-type Props = { feed: MarketFeed; tick: number; className?: string };
+type Props = {
+  feed: MarketFeed;
+  tick: number;
+  className?: string;
+  entryPrice?: number | null;
+  entryDir?: "LONG" | "SHORT" | null;
+};
 
-export function CandleChart({ feed, tick, className }: Props) {
+export function CandleChart({ feed, tick, className, entryPrice, entryDir }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -111,7 +117,50 @@ export function CandleChart({ feed, tick, className }: Props) {
     ctx.fillStyle = "#0b0e1a";
     ctx.font = `bold ${12 * (window.devicePixelRatio || 1)}px "VT323", monospace`;
     ctx.fillText(cur.close.toFixed(2), W - 72, lastY + 6);
-  }, [tick, feed]);
+
+    // Entry line for pending position
+    if (entryPrice != null && Number.isFinite(entryPrice)) {
+      const eY = yOf(entryPrice);
+      const isLong = entryDir === "LONG";
+      const color = isLong ? "#4ade80" : "#f43f5e";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.moveTo(0, eY); ctx.lineTo(W, eY); ctx.stroke();
+      ctx.setLineDash([]);
+      // Shaded pnl region between entry and current
+      ctx.fillStyle = (cur.close >= entryPrice) === isLong
+        ? "rgba(74,222,128,0.10)"
+        : "rgba(244,63,94,0.10)";
+      ctx.fillRect(0, Math.min(eY, lastY), W, Math.abs(lastY - eY));
+      // Label pill on the left
+      const label = `${isLong ? "▲ LONG" : "▼ SHORT"} @ ${entryPrice.toFixed(2)}`;
+      const dpr = window.devicePixelRatio || 1;
+      ctx.font = `bold ${11 * dpr}px "VT323", monospace`;
+      const w = ctx.measureText(label).width + 12;
+      ctx.fillStyle = color;
+      ctx.fillRect(4, eY - 10, w, 20);
+      ctx.fillStyle = "#0b0e1a";
+      ctx.fillText(label, 10, eY + 5);
+    }
+
+    // Pattern label (top-right, above price pill)
+    try {
+      const pat = feed.currentPattern();
+      const prog = Math.round(feed.patternProgress() * 100);
+      const dpr = window.devicePixelRatio || 1;
+      ctx.font = `${12 * dpr}px "VT323", monospace`;
+      const text = `PATTERN: ${pat}  ${prog}%`;
+      const tw = ctx.measureText(text).width + 10;
+      ctx.fillStyle = "rgba(11,14,26,0.75)";
+      ctx.fillRect(W - tw - 6, 6, tw, 22);
+      ctx.strokeStyle = "rgba(120,180,255,0.4)";
+      ctx.strokeRect(W - tw - 6, 6, tw, 22);
+      ctx.fillStyle = "#8fb6ff";
+      ctx.fillText(text, W - tw - 1, 22);
+    } catch { /* older feeds without pattern methods */ }
+  }, [tick, feed, entryPrice, entryDir]);
 
   return (
     <div className={"relative w-full h-full " + (className ?? "")}>
