@@ -653,6 +653,15 @@ export function useGame() {
     firstTradeRef.current = false;
     hpLossMultRef.current = 1.0;
     eventIntervalBaseRef.current = 16000;
+    nextTradeWinRef.current = false;
+    doubleCoinsRef.current = 0;
+    totalLossesRef.current = 0;
+    iron4Ref.current = 0;
+    bailoutUsedThisLevelRef.current = false;
+    lastTradeAtRef.current = Date.now();
+    heroRef.current = null;
+    setHeroIdState(null);
+    setSkillCooldownEnd(0);
     startRef.current = Date.now();
     lastEventRef.current = Date.now();
     lastBossRef.current = Date.now();
