@@ -3,6 +3,7 @@ import { createSimulatedFeed, type MarketFeed } from "./market";
 import type { Candle, FloatingText, GameEvent, MarketMode, Prediction, Stats } from "./types";
 import { rollBoss, rollEvent, rollNewsTicker, rollNarratorLine, TILT_LINES } from "./events";
 import { sfx } from "./sfx";
+import { heroById, type HeroDef, type HeroSkillId } from "./heroes";
 
 const MODES: MarketMode[] = ["BULL", "BEAR", "SIDEWAYS", "HIGH_VOL", "MEME", "BLACK_SWAN"];
 const INITIAL_CANDLES = 40;
@@ -52,8 +53,32 @@ export function useGame() {
   const totalTradesRef = useRef(0);         // b_time_stop, p_compound tracking
   const compoundWinsRef = useRef(0);        // p_compound: wins this block of 10
   const firstTradeRef = useRef(true);       // w_focus: first trade guaranteed win
+  const nextTradeWinRef = useRef(false);    // hero skill "prophet" & "print_money": force next trade win
+  const doubleCoinsRef = useRef(0);         // hero skill "double_coins": remaining double-coin wins
+  const totalLossesRef = useRef(0);         // for w_umbrella (first 5 losses total halved)
+  const iron4Ref = useRef(0);               // for b_iron (every 4th loss = 0 dmg)
+  const bailoutUsedThisLevelRef = useRef(false); // for b_bailout
+  const lastTradeAtRef = useRef(Date.now()); // for g_calm regen
   const hpLossMultRef = useRef(1.0);        // difficulty scaler
   const eventIntervalBaseRef = useRef(16000);
+
+  // Hero
+  const [heroId, setHeroIdState] = useState<string | null>(null);
+  const heroRef = useRef<HeroDef | null>(null);
+  const [skillCooldownEnd, setSkillCooldownEnd] = useState(0);
+  const setHeroId = useCallback((id: string | null) => {
+    heroRef.current = heroById(id);
+    setHeroIdState(id);
+    // Apply starting bonuses
+    const h = heroRef.current;
+    if (!h) return;
+    setStats((s) => ({
+      ...s,
+      coins: s.coins + (h.passive.startCoins ?? 0),
+      maxHp: s.maxHp + (h.passive.startHp ?? 0),
+      hp: s.hp + (h.passive.startHp ?? 0),
+    }));
+  }, []);
 
   // TP/SL intra-candle check
   const pendingRef = useRef<Pending>(null);
@@ -114,12 +139,20 @@ export function useGame() {
       setStats((s) => {
         const arts = artifactsRef.current;
         const gear = ownedItemsRef.current;
+        const hero = heroRef.current;
+        const hPas = hero?.passive ?? {};
         const pnl = Math.abs(delta / p.entry) * 1000 * (1 + s.combo * 0.05);
+        // Fixed-risk position sizing so balance actually moves
+        const riskPct = hPas.riskPct ?? 0.08;
+        const positionRisk = Math.max(20, Math.round(Math.max(50, s.balance) * riskPct));
         let ns = { ...s };
         totalTradesRef.current++;
+        lastTradeAtRef.current = Date.now();
 
-        // w_focus: first trade of level guaranteed win
-        const effectiveWin = win || (firstTradeRef.current && arts.includes("w_focus"));
+        // w_focus: first trade of level guaranteed win. hero prophet/print_money: force next win.
+        const forcedWin = nextTradeWinRef.current || (firstTradeRef.current && arts.includes("w_focus"));
+        if (nextTradeWinRef.current) nextTradeWinRef.current = false;
+        const effectiveWin = win || forcedWin;
         // b_time_stop: every 8th trade = automatic free turn (skip resolution)
         const isFreeTurn = arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0;
         // p_the_algo: 10% auto-win chance
@@ -138,7 +171,9 @@ export function useGame() {
           return ns; // skip this trade entirely
         }
 
-        if (effectiveWin || algoWin || quantWin || charAiWin) {
+        // vpn shop item: 5% auto-win
+        const vpnWin = !win && gear.includes("vpn") && Math.random() < 0.05;
+        if (effectiveWin || algoWin || quantWin || charAiWin || vpnWin) {
           if (algoWin && !win)  pushFloat("🤖 ALGO WIN!", "var(--neon-magenta)");
           if (quantWin)         pushFloat("🧠 QUANT WIN!", "var(--neon-blue)");
           if (charAiWin)        pushFloat("🤖 AI WIN!", "var(--neon-blue)");
@@ -153,6 +188,9 @@ export function useGame() {
           let gain = Math.round(pnl * streakMult);
           if (arts.includes("p_godmode"))   gain = Math.round(gain * 1.40);
           if (arts.includes("b_leverage"))  gain = Math.round(gain * 1.50);
+          if (arts.includes("p_yolo"))      gain = Math.round(gain * 1.80);
+          if (arts.includes("b_market_god"))gain = Math.round(gain * 1.15);
+          if (hPas.gainMult)                gain = Math.round(gain * hPas.gainMult);
           if (gear.includes("char_scalper")) gain = Math.round(gain * 1.05);
           if (gear.includes("char_day"))    gain = Math.round(gain * 1.05);
           // Degen: on wins, 50% chance to double
@@ -172,6 +210,12 @@ export function useGame() {
           if (arts.includes("b_momentum"))    coinGain += 4 + Math.floor(ns.combo * 0.5);
           if (arts.includes("g_coin_bonus"))  coinGain += 4;
           if (arts.includes("g_journal") && ns.accuracy > 60) coinGain = Math.round(coinGain * 1.20);
+          if (arts.includes("w_ledger") && ns.accuracy > 60) coinGain = Math.round(coinGain * 1.10);
+          if (arts.includes("w_penny"))      coinGain += 2;
+          if (arts.includes("g_greed"))      coinGain += Math.floor(ns.combo * 3);
+          if (arts.includes("g_moon") && (ns.mode === "MEME" || ns.mode === "HIGH_VOL")) coinGain = Math.round(coinGain * 1.25);
+          if (arts.includes("p_infinite"))   coinGain = Math.round(coinGain * 2);
+          if (arts.includes("b_market_god")) coinGain = Math.round(coinGain * 1.15);
           if (gear.includes("cat"))           coinGain = Math.round(coinGain * 1.10);
           if (gear.includes("pet_cat"))       coinGain = Math.round(coinGain * 1.10);
           if (gear.includes("pet_bull"))      coinGain = Math.round(coinGain * 1.15);
@@ -184,15 +228,30 @@ export function useGame() {
           if (gear.includes("pet_dragon") && ns.combo >= 5) coinGain = Math.round(coinGain * 1.25);
           // quant: every 5th trade is auto-resolved \u2014 bonus coins on those trades
           if (gear.includes("quant") && totalTradesRef.current % 5 === 0) coinGain = Math.round(coinGain * 2);
+          if (gear.includes("meme_stonk") && (ns.mode === "MEME" || ns.mode === "HIGH_VOL")) coinGain = Math.round(coinGain * 1.15);
+          if (gear.includes("pet_hamster") && Math.random() < 0.5) coinGain = Math.round(coinGain * 1.02);
+          if (hPas.coinMult)                  coinGain = Math.round(coinGain * hPas.coinMult);
+          if (doubleCoinsRef.current > 0)     { coinGain *= 2; doubleCoinsRef.current--; pushFloat("💰 x2 COINS!", "var(--neon-yellow)"); }
 
           ns.coins += coinGain;
           ns.levelCoinsEarned += coinGain;
 
           let xpGain = 10 + ns.combo * 2 + streakTier * 5;
           if (arts.includes("w_xp")) xpGain = Math.round(xpGain * 1.20);
+          if (hPas.xpMult)           xpGain = Math.round(xpGain * hPas.xpMult);
           ns.xp += xpGain;
+
+          // BALANCE gains (fixed-risk position sizing)
+          const balanceGain = Math.max(1, Math.round(positionRisk * (0.9 + Math.min(1.5, streakMult - 1))));
           ns.profit += gain;
-          ns.balance += gain;
+          ns.balance += balanceGain;
+
+          // w_socks: +1 max HP per win up to +30
+          if (arts.includes("w_socks") && ns.maxHp < 130) ns.maxHp += 1;
+          // p_market_king every 5th win bonus coins
+          if (arts.includes("p_market_king") && ns.wins % 5 === 0) { ns.coins += 50; ns.levelCoinsEarned += 50; pushFloat("👑 +50", "var(--neon-yellow)"); }
+          // w_snack: +2 hp any trade
+          if (arts.includes("w_snack")) ns.hp = Math.min(ns.maxHp, ns.hp + 2);
 
           // Heals
           if (ns.combo % 5 === 0) ns.hp = Math.min(ns.maxHp, ns.hp + 8);
@@ -254,6 +313,17 @@ export function useGame() {
           if (arts.includes("g_insurance") && ns.hp < 25) hpLoss = Math.round(hpLoss * 0.5);
           // pet_bear: -6% HP loss on SHORT losses
           if (gear.includes("pet_bear") && p.dir === "SHORT") hpLoss = Math.round(hpLoss * 0.94);
+          // hero passive hp mult
+          if (hPas.hpLossMult) hpLoss = Math.round(hpLoss * hPas.hpLossMult);
+          if (arts.includes("p_yolo")) hpLoss = Math.round(hpLoss * 1.30);
+          // w_umbrella: first 5 losses total halved
+          totalLossesRef.current++;
+          if (arts.includes("w_umbrella") && totalLossesRef.current <= 5) hpLoss = Math.round(hpLoss * 0.5);
+          // b_iron: every 4th loss zero dmg
+          iron4Ref.current++;
+          if (arts.includes("b_iron") && iron4Ref.current % 4 === 0) { hpLoss = 0; pushFloat("🍺 IRON!", "var(--neon-blue)"); }
+          // fund_mgr cap
+          if (gear.includes("char_fund_mgr")) hpLoss = Math.min(5, hpLoss);
 
           ns.losses += 1;
           consecutiveLossesRef.current++;
@@ -290,9 +360,25 @@ export function useGame() {
 
           // w_bandage: small heal on loss
           if (arts.includes("w_bandage")) ns.hp = Math.min(ns.maxHp, ns.hp + 3);
+          if (arts.includes("w_snack"))   ns.hp = Math.min(ns.maxHp, ns.hp + 2);
 
+          // BALANCE loss (fixed-risk sizing)
+          let balanceLoss = positionRisk;
+          if (arts.includes("g_hedge"))  balanceLoss = Math.round(balanceLoss * 0.70);
+          if (arts.includes("p_yolo"))   balanceLoss = Math.round(balanceLoss * 1.10);
+          if (hPas.lossMult)             balanceLoss = Math.round(balanceLoss * hPas.lossMult);
+          if (hasLeverage)               balanceLoss = Math.round(balanceLoss * 1.30);
           ns.profit = Math.max(0, ns.profit - loss);
-          ns.balance = Math.max(0, ns.balance - loss);
+          ns.balance = Math.max(0, ns.balance - balanceLoss);
+          pushFloat(`-$${balanceLoss}`, "var(--neon-red)");
+
+          // b_bailout: instant $1000 if broke, once per level
+          if (arts.includes("b_bailout") && ns.balance <= 50 && !bailoutUsedThisLevelRef.current) {
+            bailoutUsedThisLevelRef.current = true;
+            ns.balance += 1000;
+            pushFloat("🎟 BAILOUT +$1000", "var(--neon-green)");
+            addNews("🎟 Bailout Voucher used — +$1000 emergency capital!");
+          }
           sfx.lose();
           setFlash("red");
           setShake(true);
@@ -312,8 +398,20 @@ export function useGame() {
             addNews("🦅 Phoenix Soul activates — revived!");
           } else {
             ns.gameOver = true;
+            ns.crashCause = "hp";
             setPaused(true);
           }
+        }
+
+        // BANKRUPTCY: balance depleted
+        if (!ns.gameOver && ns.balance <= 0) {
+          ns.gameOver = true;
+          ns.crashCause = "balance";
+          setPaused(true);
+          addNews("💸 BANKRUPT — your monitor crashes to the floor.");
+          sfx.crash();
+          setShake(true);
+          trackedTimeout(() => setShake(false), 800);
         }
 
         // ── Narrator (streak highs) ───────────────────────────────────────────
