@@ -240,6 +240,18 @@ function Game() {
               </div>
             </div>
             <button onClick={() => setConfirmNewGame(true)} className="font-pixel text-[10px] text-neon-green px-3 py-2 pixel-panel neon-green-glow">🆕 NEW GAME</button>
+            {g.hero && (
+              <button
+                onClick={g.activateSkill}
+                disabled={Date.now() < g.skillCooldownEnd}
+                className="font-pixel text-[10px] px-3 py-2 pixel-panel"
+                style={{ color: g.hero.color, borderColor: g.hero.color, opacity: Date.now() < g.skillCooldownEnd ? 0.5 : 1 }}
+                title={`${g.hero.skillName} — ${g.hero.skillDesc}`}
+              >
+                {g.hero.emoji} [Q] {g.hero.skillName}
+                {Date.now() < g.skillCooldownEnd && ` (${Math.ceil((g.skillCooldownEnd - Date.now())/1000)}s)`}
+              </button>
+            )}
             <button onClick={() => setShopOpen(true)} className="font-pixel text-[10px] text-neon-yellow px-3 py-2 pixel-panel neon-yellow-glow">🛒 SHOP 🪙{g.stats.coins}</button>
             <button onClick={() => setGalleryOpen(true)} className="font-pixel text-[10px] text-neon-magenta px-3 py-2 pixel-panel">
               🏛 ARTIFACTS {collectedArtifacts.length > 0 ? `(${collectedArtifacts.length})` : ""}
