@@ -10,6 +10,7 @@ import { Shop, type ShopItem } from "@/components/game/Shop";
 import { GameOver } from "@/components/game/GameOver";
 import { ArtifactPicker } from "@/components/game/ArtifactPicker";
 import { ArtifactGallery } from "@/components/game/ArtifactGallery";
+import { HeroPicker } from "@/components/game/HeroPicker";
 import { rollArtifacts, type ArtifactDef } from "@/game/artifacts";
 import { sfx } from "@/game/sfx";
 import { music } from "@/game/music";
@@ -45,6 +46,8 @@ type MissionDef = {
   target: number;
   getProgress: (s: Stats, gl: number) => number;
 };
+// Internal state extends MissionState with the getProgress closure.
+type LiveMission = MissionState & { getProgress: (s: Stats, gl: number) => number };
 const MISSION_POOL: MissionDef[] = [
   { id: "win5", text: "Win 5 trades", reward: 30, target: 5, getProgress: (s) => s.wins },
   { id: "win10", text: "Win 10 trades", reward: 60, target: 10, getProgress: (s) => s.wins },
@@ -56,7 +59,7 @@ const MISSION_POOL: MissionDef[] = [
   { id: "acc70", text: "70% accuracy (10+)", reward: 80, target: 70, getProgress: (s) => s.wins + s.losses >= 10 ? s.accuracy : 0 },
   { id: "nolose", text: "Win 3 in a row", reward: 40, target: 3, getProgress: (s) => s.combo },
 ];
-function generateMissions(): MissionState[] {
+function generateMissions(): LiveMission[] {
   const shuffled = [...MISSION_POOL].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 4).map(m => ({ ...m, progress: 0, completed: false }));
 }
@@ -70,13 +73,15 @@ function Game() {
   const [galleryOpen, setGalleryOpen] = useState(false);
 
   // ── Mission state ─────────────────────────────────────────────────────────
-  const [missions, setMissions] = useState<MissionState[]>(() => generateMissions());
+  // Init empty so SSR/CSR match; populate after mount to avoid hydration mismatch
+  const [missions, setMissions] = useState<LiveMission[]>([]);
+  useEffect(() => { setMissions(generateMissions()); }, []);
   const missionAwardedRef = useRef(new Set<string>());
 
   // ── Game phase + artifact state ────────────────────────────────────────────
-  type Phase = "artifact_pick" | "playing";
-  const [phase, setPhase] = useState<Phase>("artifact_pick");
-  const [artifactChoices, setArtifactChoices] = useState<ArtifactDef[]>(() => rollArtifacts(3, []));
+  type Phase = "hero_pick" | "artifact_pick" | "playing";
+  const [phase, setPhase] = useState<Phase>("hero_pick");
+  const [artifactChoices, setArtifactChoices] = useState<ArtifactDef[]>([]);
   const [collectedArtifacts, setCollectedArtifacts] = useState<string[]>([]);
   const [pendingLevelUp, setPendingLevelUp] = useState(false);
   const [confirmNewGame, setConfirmNewGame] = useState(false);
@@ -137,6 +142,7 @@ function Game() {
       if (k === "g") setGalleryOpen((s) => !s);
       if (k === "escape") { setShopOpen(false); setHotkeysOpen(false); setConfirmNewGame(false); setGalleryOpen(false); }
       if (k === "n") setConfirmNewGame(true);
+      if (k === "q") g.activateSkill();
     };
     window.addEventListener("keydown", on);
     return () => window.removeEventListener("keydown", on);
@@ -149,10 +155,18 @@ function Game() {
     setCollectedArtifacts([]);
     setPendingLevelUp(false);
     setShopOpen(false);
-    setArtifactChoices(rollArtifacts(3, [], 1));
-    setPhase("artifact_pick");
+    setArtifactChoices([]);
+    setPhase("hero_pick");
+    g.setPaused(true);
     setMissions(generateMissions());
     missionAwardedRef.current.clear();
+  }, [g]);
+
+  const handleHeroPick = useCallback((id: string) => {
+    g.setHeroId(id);
+    setPhase("playing");
+    g.setPaused(false);
+    sfx.coin();
   }, [g]);
 
   const handleArtifactPick = useCallback((id: string) => {
