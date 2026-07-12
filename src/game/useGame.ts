@@ -497,6 +497,7 @@ export function useGame() {
     totalTradesRef.current = 0;
     compoundWinsRef.current = 0;
     firstTradeRef.current = artifactsRef.current.includes("w_focus");
+    bailoutUsedThisLevelRef.current = false;
 
     const newLevel = gameLevelRef.current + 1;
     gameLevelRef.current = newLevel;
