@@ -64,4 +64,5 @@ export type Stats = {
   mode: MarketMode;
   gameOver: boolean;
   levelCoinsEarned: number;
+  crashCause?: "hp" | "balance" | null;
 };
