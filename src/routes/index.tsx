@@ -310,8 +310,11 @@ function Game() {
         {g.stats.gameOver && <GameOver stats={g.stats} gameLevel={g.gameLevel} onRestart={doStartNewGame} />}
 
         {/* Artifact picker overlay */}
-        {phase === "artifact_pick" && !g.stats.gameOver && (
+        {phase === "artifact_pick" && !g.stats.gameOver && artifactChoices.length > 0 && (
           <ArtifactPicker choices={artifactChoices} onPick={handleArtifactPick} gameLevel={g.gameLevel} collectedIds={collectedArtifacts} />
+        )}
+        {phase === "hero_pick" && !g.stats.gameOver && (
+          <HeroPicker onPick={handleHeroPick} />
         )}
 
         {/* Hotkey help overlay */}
