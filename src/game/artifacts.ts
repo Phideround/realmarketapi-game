@@ -57,6 +57,30 @@ export const ARTIFACTS: ArtifactDef[] = [
   { id: "bu_shield2", tier: "purple", name: "Aegis Shield",    emoji: "🛡️⛔", desc: "First 2 losses per level are shielded (upgrades Loss Shield)",requires: "b_shield" },
   { id: "pu_immortal",tier: "purple", name: "Invincibility",   emoji: "💎💎", desc: "First 7 losses per level deal no HP (upgrades Diamond Heart)",requires: "p_immortal" },
   { id: "pu_phoenix", tier: "purple", name: "Eternal Flame",   emoji: "🔥🦅", desc: "Revive TWICE per run with 75 HP (upgrades Phoenix Soul)",    requires: "p_phoenix" },
+
+  // ── More Common ──
+  { id: "w_snack",     tier: "white", name: "Trader Snack",    emoji: "🍎", desc: "Heal +2 HP after every trade (win or loss)" },
+  { id: "w_penny",     tier: "white", name: "Piggy Coin",      emoji: "🐖", desc: "+2 bonus coins every trade" },
+  { id: "w_umbrella",  tier: "white", name: "Rainy Umbrella",  emoji: "☂️", desc: "First 5 losses total this run: HP loss halved" },
+  { id: "w_socks",     tier: "white", name: "Fuzzy Socks",     emoji: "🧦", desc: "+1 max HP per win (up to +30)" },
+  { id: "w_ledger",    tier: "white", name: "Ledger",          emoji: "📒", desc: "+10% coins on trades after 60% accuracy" },
+
+  // ── More Uncommon ──
+  { id: "g_calm",      tier: "green", name: "Zen Bell",        emoji: "🔔", desc: "Every 10s of no trade, heal +3 HP" },
+  { id: "g_greed",     tier: "green", name: "Greed Sigil",     emoji: "🤑", desc: "+3 coins per streak stack (uncapped)" },
+  { id: "g_hedge",     tier: "green", name: "Micro Hedge",     emoji: "⚖️", desc: "Losses reduce balance by 30% less" },
+  { id: "g_moon",      tier: "green", name: "Moon Boots",      emoji: "🌕", desc: "MEME + HIGH_VOL modes give +25% coins" },
+
+  // ── More Rare ──
+  { id: "b_bailout",   tier: "blue",  name: "Bailout Voucher", emoji: "🎟", desc: "Once per level: instantly +$1000 balance if broke" },
+  { id: "b_iron",      tier: "blue",  name: "Iron Stomach",    emoji: "🍺", desc: "Every 4th loss deals ZERO damage" },
+  { id: "b_market_god",tier: "blue",  name: "Chart Whisperer", emoji: "🗣️", desc: "+15% streak bonus and +15% gains" },
+
+  // ── More Epic ──
+  { id: "p_infinite",  tier: "purple",name: "Infinity Stack",  emoji: "♾️", desc: "Coins earned x2. Nothing else. Just money." },
+  { id: "p_yolo",      tier: "purple",name: "YOLO Charm",      emoji: "🎲", desc: "+80% gains but +30% HP loss. Full send." },
+  { id: "p_market_king",tier:"purple",name: "Market King",     emoji: "👑", desc: "Every 5th win, +50 coins bonus" },
+  { id: "p_meditation",tier: "purple",name: "Deep Meditation", emoji: "🧘", desc: "HP regens +1 every 5s automatically" },
 ];
 
 export const TIER_COLORS: Record<ArtifactTier, string> = {

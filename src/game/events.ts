@@ -34,6 +34,22 @@ export const EVENT_POOL: Array<() => GameEvent> = [
   () => ({ id: rid(), kind: "ELON",         title: "🍕 LUNCH BREAK PUMP",       subtitle: "Bored traders buying dips",           bias: 1.0,  volMult: 1.4, ttl: 4 }),
   () => ({ id: rid(), kind: "MM_TRAP",      title: "🧾 WASH TRADING ALERT",     subtitle: "Volume is fake. Prices real.",        bias: (Math.random()-0.5)*2, volMult: 1.8, ttl: 5 }),
   () => ({ id: rid(), kind: "CPI",          title: "🧬 ALGO MALFUNCTION",       subtitle: "Trading bots arguing",               bias: (Math.random()-0.5)*3, volMult: 4.0, ttl: 5 }),
+  // ── Funny/absurd events ─────────────────────────────────────────────────
+  () => ({ id: rid(), kind: "FLASH_CRASH",  title: "☄️ METEOR INCOMING!",      subtitle: "Everyone is panic-selling and screaming outside!", bias: -2.0, volMult: 4.5, ttl: 6 }),
+  () => ({ id: rid(), kind: "FLASH_CRASH",  title: "🌪 TORNADO WARNING",        subtitle: "The chart is spinning. Literally.",       bias: (Math.random()-0.5)*4, volMult: 4.0, ttl: 6 }),
+  () => ({ id: rid(), kind: "ELON",         title: "👽 UFO OVER NASDAQ",         subtitle: "Traders looking out the window instead of screens", bias: 1.5, volMult: 3.0, ttl: 5 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🐸 PEPE ARMY CHARGES",       subtitle: "Retail memelords bought everything",       bias: 2.0, volMult: 3.0, ttl: 5 }),
+  () => ({ id: rid(), kind: "LIQUIDATION",  title: "🚽 TOILET PAPER SHORTAGE",    subtitle: "Somehow this crashed the market",         bias: -1.2, volMult: 2.5, ttl: 5 }),
+  () => ({ id: rid(), kind: "ELON",         title: "🍔 CEO ORDERS BURGER",       subtitle: "Insider signal? Analysts arguing.",       bias: 0.8, volMult: 1.5, ttl: 4 }),
+  () => ({ id: rid(), kind: "WHALE",        title: "🎩 SATOSHI WALLET MOVES",    subtitle: "10-year dormant coins just woke up",      bias: -1.5, volMult: 3.0, ttl: 6 }),
+  () => ({ id: rid(), kind: "FLASH_CRASH",  title: "🐕 DOGGY-COIN RUG PULL",     subtitle: "Dev walked the dog. And your coins.",     bias: -1.8, volMult: 3.2, ttl: 5 }),
+  () => ({ id: rid(), kind: "ELON",         title: "🎤 CELEB DIVORCE RALLY",     subtitle: "Alimony flows into crypto",               bias: 1.3, volMult: 2.0, ttl: 5 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🐛 TRADING BOT BUG",         subtitle: "Buy button became sell button",           bias: (Math.random()-0.5)*3.5, volMult: 3.5, ttl: 4 }),
+  () => ({ id: rid(), kind: "SHORT_SQUEEZE",title: "🧻 REDDIT ATTACK",          subtitle: "r/WSB decides today is the day",           bias: 2.2, volMult: 3.5, ttl: 6 }),
+  () => ({ id: rid(), kind: "CPI",          title: "🐢 SLOW NEWS DAY",           subtitle: "Nothing happens. It's weird.",             bias: 0, volMult: 0.4, ttl: 8 }),
+  () => ({ id: rid(), kind: "ELON",         title: "☕ MONDAY MORNING PUMP",     subtitle: "Everyone's caffeinated and buying",        bias: 1.1, volMult: 1.6, ttl: 5 }),
+  () => ({ id: rid(), kind: "LIQUIDATION",  title: "🎃 SPOOKY WICK",             subtitle: "The chart formed a ghost pattern",         bias: -1.0, volMult: 2.8, ttl: 4 }),
+  () => ({ id: rid(), kind: "WHALE",        title: "🐳 WHALE FART",              subtitle: "Small movement, big splash",               bias: (Math.random()-0.5)*2, volMult: 2.0, ttl: 4 }),
 ];
 
 export const BOSSES = [
