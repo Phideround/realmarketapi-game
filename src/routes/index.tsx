@@ -118,6 +118,11 @@ function Game() {
 
   useEffect(() => () => music.stop(), []);
 
+  // Pause the market until a hero is chosen on initial load
+  useEffect(() => {
+    if (phase === "hero_pick") g.setPaused(true);
+  }, [phase, g]);
+
   const toggleMusic = useCallback(() => {
     if (music.isRunning()) { music.stop(); setMusicOn(false); }
     else { music.start(); setMusicOn(true); }
