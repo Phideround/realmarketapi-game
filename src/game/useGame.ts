@@ -676,18 +676,97 @@ export function useGame() {
       setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 25) }));
       pushFloat("+25 HP", "var(--neon-green)");
     }
+    if (id === "pizza") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 15) }));
+      pushFloat("+15 HP 🍕", "var(--neon-green)");
+    }
+    if (id === "energy_drink") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 10), combo: s.combo + 1 }));
+      pushFloat("+10 HP 🥤", "var(--neon-green)");
+    }
+    if (id === "balance_loan") {
+      setStats((s) => ({ ...s, balance: s.balance + 500 }));
+      pushFloat("+$500 💵", "var(--neon-green)");
+    }
+    if (id === "small_bailout") {
+      setStats((s) => ({ ...s, balance: s.balance + 1500 }));
+      pushFloat("+$1500 🤝", "var(--neon-green)");
+    }
   }, [pushFloat]);
+
+  // ── Hero skill activation ────────────────────────────────────────────────
+  const activateSkill = useCallback(() => {
+    const h = heroRef.current;
+    if (!h) return;
+    const now = Date.now();
+    if (now < skillCooldownEnd) return;
+    setSkillCooldownEnd(now + h.cooldownMs);
+    sfx.boss();
+    const id: HeroSkillId = h.skillId;
+    if (id === "sleep") {
+      setPaused(true);
+      pushFloat("😴 SLEEP", "var(--neon-blue)");
+      addNews("😴 Zen Master naps — market pauses for a moment.");
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 20) }));
+      trackedTimeout(() => setPaused(false), 5000);
+    } else if (id === "prophet") {
+      nextTradeWinRef.current = true;
+      pushFloat("✨ VISION", "var(--neon-magenta)");
+      addNews("🔮 The Prophet peers into the next candle…");
+    } else if (id === "heal") {
+      setStats((s) => ({ ...s, hp: s.maxHp }));
+      pushFloat("❤️ FULL HEAL", "var(--neon-green)");
+    } else if (id === "double_coins") {
+      doubleCoinsRef.current = 3;
+      pushFloat("💰 x2 COINS (3)", "var(--neon-yellow)");
+      addNews("🐋 Whale unleashes DOUBLE UP — next 3 wins pay double!");
+    } else if (id === "rewind") {
+      feedRef.current = makeFeed();
+      pushFloat("🔄 REBOOT", "var(--neon-blue)");
+      addNews("👨‍💻 Hacker wiped the chart — fresh pattern loaded.");
+      setPending(null);
+    } else if (id === "shield") {
+      shieldUsedRef.current += 3;
+      pushFloat("🛡 BAILOUT SHIELD x3", "var(--neon-blue)");
+    } else if (id === "print_money") {
+      setStats((s) => ({ ...s, coins: s.coins + 300, levelCoinsEarned: s.levelCoinsEarned + 300 }));
+      nextTradeWinRef.current = true;
+      pushFloat("🚀 +300 COINS", "var(--neon-yellow)");
+      addNews("🎰 Degen prints money. Next trade forced win.");
+    } else if (id === "diamond_hands") {
+      setStats((s) => ({ ...s, hp: s.maxHp }));
+      shieldUsedRef.current += 3;
+      pushFloat("💪 SMASH!", "var(--neon-magenta)");
+    }
+  }, [skillCooldownEnd, addNews, pushFloat, trackedTimeout]);
+
+  // ── Passive tick effects: g_calm + p_meditation ──────────────────────────
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const arts = artifactsRef.current;
+      const now = Date.now();
+      let heal = 0;
+      if (arts.includes("g_calm") && now - lastTradeAtRef.current > 10000) heal += 3;
+      if (arts.includes("p_meditation")) heal += 1;
+      if (heal > 0) setStats((s) => (s.gameOver ? s : { ...s, hp: Math.min(s.maxHp, s.hp + heal) }));
+    }, 5000);
+    return () => clearInterval(iv);
+  }, []);
 
   const feed = feedRef.current!;
   const levelTarget = Math.round(BASE_TARGET * gameLevel * (1 + (gameLevel - 1) * 0.3));
   return useMemo(() => ({
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
+    heroId, hero: heroRef.current, skillCooldownEnd,
     setScanlines, setPaused, predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
+    setHeroId, activateSkill,
   }), [
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
+    heroId, skillCooldownEnd,
     predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
+    setHeroId, activateSkill,
   ]);
 }
 
