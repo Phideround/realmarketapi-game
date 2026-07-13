@@ -17,7 +17,7 @@ export const ARTIFACTS: ArtifactDef[] = [
   { id: "w_maxhp",     tier: "white",  name: "Gym Card",        emoji: "💪", desc: "+12 max HP immediately" },
   { id: "w_xp",        tier: "white",  name: "Study Notes",     emoji: "📚", desc: "+20% XP from every win" },
   { id: "w_bandage",   tier: "white",  name: "Bandage Roll",    emoji: "🩹", desc: "Heal +3 HP on every loss (softens blowups)" },
-  { id: "w_patience",  tier: "white",  name: "Patience Manual",emoji: "🗒️", desc: "SKIP never costs coins or accuracy" },
+  { id: "w_patience",  tier: "white",  name: "Patience Manual",emoji: "🗒️", desc: "First 3 losses per level heal +5 HP" },
   { id: "w_focus",     tier: "white",  name: "Focus Crystal",   emoji: "🔮", desc: "First trade of every level is guaranteed to win" },
 
   // ── Green (Uncommon) ──────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ export const ARTIFACTS: ArtifactDef[] = [
   { id: "b_momentum",     tier: "blue", name: "Momentum",       emoji: "⚡", desc: "+4 coins per win plus +1 per combo level" },
   { id: "b_lifesteal",    tier: "blue", name: "Vampire Candle", emoji: "🧛", desc: "Heal +3 HP per win" },
   { id: "b_leverage",     tier: "blue", name: "2× Leverage",    emoji: "📈", desc: "Profit gains ×1.5 but HP loss ×1.3 on loss" },
-  { id: "b_time_stop",    tier: "blue", name: "Time Stop",      emoji: "⏸️", desc: "Every 8th trade, take a free SKIP (no HP risk)" },
+  { id: "b_time_stop",    tier: "blue", name: "Time Stop",      emoji: "⏸️", desc: "Every 8th trade grants +80 bonus coins" },
 
   // ── Purple (Epic) ──────────────────────────────────────────────────────────
   { id: "p_immortal", tier: "purple", name: "Diamond Heart",   emoji: "💎", desc: "First 4 losses per level deal no HP damage" },
