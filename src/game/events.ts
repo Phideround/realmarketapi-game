@@ -50,6 +50,19 @@ export const EVENT_POOL: Array<() => GameEvent> = [
   () => ({ id: rid(), kind: "ELON",         title: "☕ MONDAY MORNING PUMP",     subtitle: "Everyone's caffeinated and buying",        bias: 1.1, volMult: 1.6, ttl: 5 }),
   () => ({ id: rid(), kind: "LIQUIDATION",  title: "🎃 SPOOKY WICK",             subtitle: "The chart formed a ghost pattern",         bias: -1.0, volMult: 2.8, ttl: 4 }),
   () => ({ id: rid(), kind: "WHALE",        title: "🐳 WHALE FART",              subtitle: "Small movement, big splash",               bias: (Math.random()-0.5)*2, volMult: 2.0, ttl: 4 }),
+  // ── NEW EVENTS (extra chaos) ────────────────────────────────────────────
+  () => ({ id: rid(), kind: "FLASH_CRASH",  title: "🌋 VOLCANO ERUPTION",       subtitle: "Chart melts. Traders melting too.",        bias: -2.2, volMult: 4.8, ttl: 6 }),
+  () => ({ id: rid(), kind: "ELON",         title: "🐒 MONKEY TRADER GOES VIRAL",subtitle: "It picked bananas AND bottoms.",           bias: 1.6,  volMult: 2.4, ttl: 5 }),
+  () => ({ id: rid(), kind: "WHALE",        title: "🏝️ OFFSHORE FUND ROTATION",  subtitle: "Cayman islands lit up green",              bias: 1.2,  volMult: 2.0, ttl: 6 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🕷️ SPOOFING SPIDER",         subtitle: "Fake bids everywhere",                     bias: (Math.random()-0.5)*2.5, volMult: 3.0, ttl: 4 }),
+  () => ({ id: rid(), kind: "SHORT_SQUEEZE",title: "🎩 GAME STOPPED AGAIN",      subtitle: "GME 2.0, this time we mean it",            bias: 2.4,  volMult: 3.5, ttl: 6 }),
+  () => ({ id: rid(), kind: "LIQUIDATION",  title: "🛰️ STARLINK OUTAGE",         subtitle: "Bots offline. Everyone else confused.",    bias: (Math.random()-0.5)*3, volMult: 2.8, ttl: 5 }),
+  () => ({ id: rid(), kind: "ELON",         title: "📞 SEC PHONE CALL",          subtitle: "Somebody's Zoom is being subpoenaed",      bias: -1.4, volMult: 2.6, ttl: 5 }),
+  () => ({ id: rid(), kind: "CPI",          title: "🥶 CRYPTO WINTER FLURRY",    subtitle: "Everything below fair value. As usual.",   bias: -1.0, volMult: 1.6, ttl: 7 }),
+  () => ({ id: rid(), kind: "WHALE",        title: "🐫 DESERT WHALE",             subtitle: "Middle-Eastern fund enters chat",          bias: 1.8,  volMult: 2.3, ttl: 6 }),
+  () => ({ id: rid(), kind: "MM_TRAP",      title: "🎣 WICK FISHING",            subtitle: "You are the bait.",                        bias: -0.8, volMult: 3.0, ttl: 4 }),
+  () => ({ id: rid(), kind: "FLASH_CRASH",  title: "☠️ BLACK SWAN LANDS",        subtitle: "Nobody saw it coming (again).",            bias: -2.0, volMult: 4.5, ttl: 6 }),
+  () => ({ id: rid(), kind: "SHORT_SQUEEZE",title: "🐂 BULL RUN PARADE",         subtitle: "Marching band arrives at NYSE",            bias: 2.0,  volMult: 2.5, ttl: 6 }),
 ];
 
 export const BOSSES = [
@@ -65,6 +78,14 @@ export const BOSSES = [
   "🧠 Warren Buffett",
   "🐂 CZ",
   "🦍 Ape King",
+  "🐉 Chinese Central Bank",
+  "🕶️ Anon Whale #42",
+  "🎩 Wall Street Bets Mod",
+  "🧙 Nassim Taleb",
+  "🐺 Wolf of Wall Street",
+  "🤡 Sam Bankman-Fraud",
+  "🎬 Cathie Wood",
+  "🧊 The Winklevii",
 ];
 
 const BOSS_LINES: Record<string, string> = {
@@ -80,6 +101,14 @@ const BOSS_LINES: Record<string, string> = {
   "🧠 Warren Buffett": "Rule #1: don't lose money",
   "🐂 CZ": "Funds are safu.",
   "🦍 Ape King": "🦍🦍🦍 ONLY UP 🦍🦍🦍",
+  "🐉 Chinese Central Bank": "Everything crypto is now banned. Again.",
+  "🕶️ Anon Whale #42": "You cannot fight what you cannot see.",
+  "🎩 Wall Street Bets Mod": "This is the way.",
+  "🧙 Nassim Taleb": "You just experienced a Black Swan.",
+  "🐺 Wolf of Wall Street": "SELL ME THIS PEN.",
+  "🤡 Sam Bankman-Fraud": "Trust me bro. Funds are safe.",
+  "🎬 Cathie Wood": "Innovation is exponential.",
+  "🧊 The Winklevii": "We invented Facebook AND Bitcoin.",
 };
 
 export const NEWS_TICKER = [
@@ -113,6 +142,21 @@ export const NEWS_TICKER = [
   "🔥 This is fine. Everything is fine. (chart goes vertical)",
   "⚠️ Not financial advice. But if it was, still not responsible.",
   "🤯 Stonks only go up (source: made it up)",
+  // Fresh headlines
+  "🎪 SEC opens investigation into 'the vibes'",
+  "🐟 Retail exits again — down 2000 sats",
+  "🎳 Options desk bowling with client capital",
+  "🐢 Slow bleed continues into weekend",
+  "🌊 Liquidity dries up during lunch break",
+  "🥶 VIX spikes: hedge funds sweating",
+  "🎨 Central bank paints the tape green",
+  "🐍 Insider sold 5 min before the dump",
+  "🎡 Weekend gamma exposure looking spicy",
+  "🎢 Nasdaq halts trading… again",
+  "📮 New meme coin: TRDR, up 4000%",
+  "🎯 Analyst target: 'up or down'",
+  "💊 New crypto ETF just dropped",
+  "🐛 Bug in exchange API — all wicks are wrong",
 ];
 
 export function rollEvent(): GameEvent {
