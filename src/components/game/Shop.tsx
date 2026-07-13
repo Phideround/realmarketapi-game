@@ -6,7 +6,7 @@ export type ShopItem = {
   emoji: string;
   cost: number;
   desc: string;
-  tab?: "gear" | "indicators" | "chars" | "pets" | "cosmetics";
+  tab?: "gear" | "consumables" | "indicators" | "chars" | "pets" | "cosmetics" | "luxury";
   requires?: string;
   repeatable?: boolean;
 };
@@ -27,19 +27,32 @@ const GEAR: ShopItem[] = [
   { id: "desk",      name: "Trading Desk",       emoji: "🪑", cost: 380,  desc: "+20% coin score multiplier." },
   // Funny / cursed items
   { id: "girlfriend",name: "Girlfriend",         emoji: "💃", cost: 350,  desc: "40% chance she calls mid-trade. Why did you buy this?" },
-  { id: "redbull",   name: "Red Bull",           emoji: "🦋", cost: 40,   desc: "Wings! −10% HP loss for next 5 trades.", repeatable: true },
   { id: "luckysocks",name: "Lucky Socks",        emoji: "🧦", cost: 70,   desc: "+2 HP whenever you build a streak of 3+." },
   { id: "therapist", name: "Therapist",          emoji: "🛋️", cost: 180,  desc: "Losses feel less painful. −15% HP loss permanently." },
-  { id: "hp_potion", name: "HP Potion",          emoji: "❤️‍🔥", cost: 50, desc: "Restore +25 HP now.", repeatable: true },
-  { id: "balance_loan",name: "Bank Loan",         emoji: "💵", cost: 100, desc: "Instantly +$500 balance (interest-free… for now).", repeatable: true },
-  { id: "small_bailout",name: "Small Bailout",    emoji: "🤝", cost: 200, desc: "Instantly +$1500 balance.", repeatable: true },
   { id: "vpn",       name: "Insider VPN",         emoji: "🕵️", cost: 220, desc: "5% chance every trade to be auto-win." },
-  { id: "pizza",     name: "Pizza Night",         emoji: "🍕", cost: 60,  desc: "Restore +15 HP now.", repeatable: true },
-  { id: "energy_drink",name: "Energy Drink",      emoji: "🥤", cost: 45,  desc: "Restore +10 HP + streak +1.", repeatable: true },
   { id: "meme_stonk",name: "Meme Stonk Book",     emoji: "📕", cost: 130, desc: "+15% coins in MEME / MEME events." },
   { id: "hedge",     name: "Hedge Fund",         emoji: "📉", cost: 900,  desc: "+50% all coin gains.",      requires: "desk" },
   { id: "quant",     name: "Quant Model",        emoji: "🧠", cost: 750,  desc: "Auto-win every 5th trade.", requires: "ai" },
   { id: "dark_pool", name: "Dark Pool Access",   emoji: "🌑", cost: 1500, desc: "No HP loss for first 10 trades per level.", requires: "hedge" },
+  // Extra gear
+  { id: "headset",   name: "Noise Headset",       emoji: "🎧", cost: 55,  desc: "Focus. +3% XP per trade." },
+  { id: "chair",     name: "Ergonomic Chair",    emoji: "💺", cost: 120,  desc: "+2% all coin gains" },
+  { id: "6monitor",  name: "6-Monitor Setup",    emoji: "🖥️", cost: 450,  desc: "+8% coin gains, +8% XP", requires: "monitor" },
+  { id: "prime_data",name: "Prime Data Feed",    emoji: "📡", cost: 600,  desc: "+15% coins & +10% XP per trade", requires: "term" },
+];
+
+// ── Consumables (one-shot repeatable purchases) ──────────────────────────
+const CONSUMABLES: ShopItem[] = [
+  { id: "hp_potion",    name: "HP Potion",       emoji: "❤️‍🔥", cost: 40, desc: "Restore +25 HP now.", repeatable: true },
+  { id: "pizza",        name: "Pizza Night",     emoji: "🍕",  cost: 45, desc: "Restore +15 HP now.", repeatable: true },
+  { id: "energy_drink", name: "Energy Drink",    emoji: "🥤",  cost: 35, desc: "Restore +10 HP + streak +1.", repeatable: true },
+  { id: "redbull",      name: "Red Bull",        emoji: "🦋",  cost: 30, desc: "Wings! Restore +12 HP.", repeatable: true },
+  { id: "balance_loan", name: "Bank Loan",       emoji: "💵",  cost: 80, desc: "Instantly +$500 balance.", repeatable: true },
+  { id: "small_bailout",name: "Small Bailout",   emoji: "🤝",  cost: 150,desc: "Instantly +$1500 balance.", repeatable: true },
+  { id: "coffee_shot",  name: "Espresso Shot",   emoji: "☕",  cost: 20, desc: "Restore +8 HP quickly.", repeatable: true },
+  { id: "sandwich",     name: "Trader Sandwich", emoji: "🥪",  cost: 25, desc: "Restore +12 HP.", repeatable: true },
+  { id: "ramen",        name: "Cup Ramen",       emoji: "🍜",  cost: 15, desc: "Cheap. +6 HP.", repeatable: true },
+  { id: "adrenaline",   name: "Adrenaline Shot", emoji: "💉",  cost: 60, desc: "Full stack +30 HP + streak +2.", repeatable: true },
 ];
 
 const INDICATORS: ShopItem[] = [
