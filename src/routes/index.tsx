@@ -58,10 +58,24 @@ const MISSION_POOL: MissionDef[] = [
   { id: "profit500", text: "Earn $500 profit", reward: 60, target: 500, getProgress: (s) => s.profit },
   { id: "acc70", text: "70% accuracy (10+)", reward: 80, target: 70, getProgress: (s) => s.wins + s.losses >= 10 ? s.accuracy : 0 },
   { id: "nolose", text: "Win 3 in a row", reward: 40, target: 3, getProgress: (s) => s.combo },
+  { id: "win25", text: "Win 25 trades", reward: 150, target: 25, getProgress: (s) => s.wins },
+  { id: "combo15", text: "Reach x15 combo", reward: 200, target: 15, getProgress: (s) => s.bestCombo },
+  { id: "survive5", text: "Survive 5 min", reward: 140, target: 300, getProgress: (s) => Math.floor(s.survivalMs / 1000) },
+  { id: "level3", text: "Reach Game Level 3", reward: 250, target: 3, getProgress: (_, gl) => gl },
+  { id: "level5", text: "Reach Game Level 5", reward: 500, target: 5, getProgress: (_, gl) => gl },
+  { id: "profit2k", text: "Earn $2000 profit", reward: 200, target: 2000, getProgress: (s) => s.profit },
+  { id: "profit10k", text: "Earn $10000 profit", reward: 600, target: 10000, getProgress: (s) => s.profit },
+  { id: "acc80", text: "80% accuracy (20+)", reward: 200, target: 80, getProgress: (s) => s.wins + s.losses >= 20 ? s.accuracy : 0 },
+  { id: "streak7", text: "Win 7 in a row", reward: 120, target: 7, getProgress: (s) => s.combo },
+  { id: "streak10", text: "Win 10 in a row", reward: 220, target: 10, getProgress: (s) => s.combo },
+  { id: "coin_hoard", text: "Hoard 500 coins", reward: 100, target: 500, getProgress: (s) => s.coins },
+  { id: "balance_5k", text: "Balance ≥ $5000", reward: 150, target: 5000, getProgress: (s) => s.balance },
+  { id: "balance_20k", text: "Balance ≥ $20000", reward: 500, target: 20000, getProgress: (s) => s.balance },
+  { id: "no_hp_loss", text: "Keep HP ≥ 90 after 15 trades", reward: 180, target: 1, getProgress: (s) => (s.wins + s.losses >= 15 && s.hp >= 90) ? 1 : 0 },
 ];
 function generateMissions(): LiveMission[] {
   const shuffled = [...MISSION_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 4).map(m => ({ ...m, progress: 0, completed: false }));
+  return shuffled.slice(0, 6).map(m => ({ ...m, progress: 0, completed: false }));
 }
 
 function Game() {
