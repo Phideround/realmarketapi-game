@@ -238,6 +238,31 @@ export function useGame() {
           const indCount = gear.filter((i) => i.startsWith("ind_")).length;
           if (indCount > 0) coinGain = Math.round(coinGain * (1 + indCount * 0.03));
 
+          // ── Cosmetic passive bonuses ─────────────────────────────────────
+          const cosCoinMult: Record<string, number> = {
+            cos_crt: 1.01, cos_neon: 1.02, cos_gold: 1.03, cos_wall_st: 1.04,
+            cos_matrix: 1.05, cos_god: 1.10, cos_vapor: 1.02,
+          };
+          for (const c of gear) if (cosCoinMult[c]) coinGain = Math.round(coinGain * cosCoinMult[c]);
+          if (gear.includes("cos_retro")) coinGain += 1;
+
+          // ── Luxury multipliers (very expensive vanity → big passive) ─────
+          const luxMult: Record<string, number> = {
+            lux_watch: 1.08, lux_lambo: 1.15, lux_yacht: 1.20, lux_jet: 1.25,
+            lux_penthouse: 1.30, lux_island: 1.50, lux_rocket: 1.80, lux_bank: 2.0,
+          };
+          for (const l of gear) if (luxMult[l]) coinGain = Math.round(coinGain * luxMult[l]);
+
+          // Extra gear coin/XP
+          if (gear.includes("6monitor")) coinGain = Math.round(coinGain * 1.08);
+          if (gear.includes("prime_data")) coinGain = Math.round(coinGain * 1.15);
+          if (gear.includes("chair"))    coinGain = Math.round(coinGain * 1.02);
+          if (gear.includes("char_influencer")) coinGain = Math.round(coinGain * 1.08);
+          if (gear.includes("char_hodler"))  coinGain = Math.round(coinGain * 1.05);
+          if (gear.includes("pet_fox"))      { /* handled on loss */ }
+          if (gear.includes("pet_octo"))     coinGain = Math.round(coinGain * 1.10);
+          if (gear.includes("pet_unicorn"))  coinGain = Math.round(coinGain * 1.30);
+
           ns.coins += coinGain;
           ns.levelCoinsEarned += coinGain;
 
@@ -245,6 +270,17 @@ export function useGame() {
           if (arts.includes("w_xp")) xpGain = Math.round(xpGain * 1.20);
           if (hPas.xpMult)           xpGain = Math.round(xpGain * hPas.xpMult);
           if (indCount > 0) xpGain = Math.round(xpGain * (1 + indCount * 0.02));
+          // Cosmetic XP mults
+          const cosXpMult: Record<string, number> = {
+            cos_cyber: 1.02, cos_japan: 1.02, cos_moon: 1.03, cos_matrix: 1.03, cos_god: 1.10,
+          };
+          for (const c of gear) if (cosXpMult[c]) xpGain = Math.round(xpGain * cosXpMult[c]);
+          if (gear.includes("headset")) xpGain = Math.round(xpGain * 1.03);
+          if (gear.includes("6monitor")) xpGain = Math.round(xpGain * 1.08);
+          if (gear.includes("prime_data")) xpGain = Math.round(xpGain * 1.10);
+          if (gear.includes("pet_owl")) xpGain = Math.round(xpGain * 1.04);
+          if (gear.includes("pet_octo")) xpGain = Math.round(xpGain * 1.05);
+          if (gear.includes("char_hodler")) xpGain = Math.round(xpGain * 1.10);
           ns.xp += xpGain;
 
           // BALANCE gains (fixed-risk position sizing)
