@@ -235,12 +235,17 @@ export function useGame() {
           if (hPas.coinMult)                  coinGain = Math.round(coinGain * hPas.coinMult);
           if (doubleCoinsRef.current > 0)     { coinGain *= 2; doubleCoinsRef.current--; pushFloat("💰 x2 COINS!", "var(--neon-yellow)"); }
 
+          // ── Indicator bonus: each owned indicator gives +3% coins & +2% XP ──
+          const indCount = gear.filter((i) => i.startsWith("ind_")).length;
+          if (indCount > 0) coinGain = Math.round(coinGain * (1 + indCount * 0.03));
+
           ns.coins += coinGain;
           ns.levelCoinsEarned += coinGain;
 
           let xpGain = 10 + ns.combo * 2 + streakTier * 5;
           if (arts.includes("w_xp")) xpGain = Math.round(xpGain * 1.20);
           if (hPas.xpMult)           xpGain = Math.round(xpGain * hPas.xpMult);
+          if (indCount > 0) xpGain = Math.round(xpGain * (1 + indCount * 0.02));
           ns.xp += xpGain;
 
           // BALANCE gains (fixed-risk position sizing)
