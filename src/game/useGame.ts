@@ -665,6 +665,7 @@ export function useGame() {
     heroRef.current = null;
     setHeroIdState(null);
     setSkillCooldownEnd(0);
+    setSkillUsesLeft(0);
     startRef.current = Date.now();
     lastEventRef.current = Date.now();
     lastBossRef.current = Date.now();
