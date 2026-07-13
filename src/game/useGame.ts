@@ -155,8 +155,12 @@ export function useGame() {
         const forcedWin = nextTradeWinRef.current || (firstTradeRef.current && arts.includes("w_focus"));
         if (nextTradeWinRef.current) nextTradeWinRef.current = false;
         const effectiveWin = win || forcedWin;
-        // b_time_stop: every 8th trade = automatic free turn (skip resolution)
-        const isFreeTurn = arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0;
+        // b_time_stop: every 8th trade grants bonus coins (no longer skips)
+        if (arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0) {
+          ns.coins += 80;
+          ns.levelCoinsEarned += 80;
+          pushFloat("⏸️ TIME STOP +80", "var(--neon-blue)");
+        }
         // p_the_algo: 10% auto-win chance
         const algoWin = !win && arts.includes("p_the_algo") && Math.random() < 0.10;
         // quant shop item: every 5th trade auto-wins
@@ -167,11 +171,6 @@ export function useGame() {
         const hasLeverage = arts.includes("b_leverage");
 
         if (firstTradeRef.current) firstTradeRef.current = false;
-
-        if (isFreeTurn) {
-          pushFloat("⏸️ TIME STOP", "var(--neon-blue)");
-          return ns; // skip this trade entirely
-        }
 
         // vpn shop item: 5% auto-win
         const vpnWin = !win && gear.includes("vpn") && Math.random() < 0.05;
