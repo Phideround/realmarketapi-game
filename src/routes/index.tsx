@@ -151,7 +151,6 @@ function Game() {
       if (!overlayOpen) {
         if (k === "a") g.predict("LONG");
         else if (k === "d") g.predict("SHORT");
-        else if (k === "s") g.predict("SKIP");
         else if (k === "r" || k === "p") g.setPaused((p) => !p);
       }
       if (k === "b") setShopOpen((s) => !s);
