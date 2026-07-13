@@ -212,12 +212,18 @@ function Game() {
     if (alreadyOwned && !u.repeatable) return;
     if (!u.repeatable) setOwned((o) => [...o, u.id]);
     g.spendCoins(u.cost);
-    // Handle special repeatable effects immediately
-    if (u.id === "hp_potion") {
-      g.applyItemEffect("hp_potion");
-    }
+    // Trigger one-shot consumable effects immediately
+    if (u.repeatable) g.applyItemEffect(u.id);
     sfx.coin();
   }, [g, owned]);
+
+  // ── Cosmetic theme classes (highest-tier owned wins) ─────────────────────
+  const COSMETIC_PRIORITY = [
+    "cos_god", "cos_matrix", "cos_moon", "cos_wall_st",
+    "cos_cave", "cos_cyber", "cos_gold", "cos_vapor",
+    "cos_japan", "cos_neon", "cos_retro", "cos_crt",
+  ];
+  const activeCosmetic = COSMETIC_PRIORITY.find((c) => owned.includes(c));
 
   return (
     <>
