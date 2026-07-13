@@ -66,12 +66,14 @@ export function useGame() {
   const [heroId, setHeroIdState] = useState<string | null>(null);
   const heroRef = useRef<HeroDef | null>(null);
   const [skillCooldownEnd, setSkillCooldownEnd] = useState(0);
+  const [skillUsesLeft, setSkillUsesLeft] = useState(0);
   const setHeroId = useCallback((id: string | null) => {
     heroRef.current = heroById(id);
     setHeroIdState(id);
     // Apply starting bonuses
     const h = heroRef.current;
     if (!h) return;
+    setSkillUsesLeft(h.uses);
     setStats((s) => ({
       ...s,
       coins: s.coins + (h.passive.startCoins ?? 0),
@@ -708,9 +710,8 @@ export function useGame() {
   const activateSkill = useCallback(() => {
     const h = heroRef.current;
     if (!h) return;
-    const now = Date.now();
-    if (now < skillCooldownEnd) return;
-    setSkillCooldownEnd(now + h.cooldownMs);
+    if (skillUsesLeft <= 0) return;
+    setSkillUsesLeft((n) => n - 1);
     sfx.boss();
     const id: HeroSkillId = h.skillId;
     if (id === "sleep") {
@@ -748,7 +749,7 @@ export function useGame() {
       shieldUsedRef.current += 3;
       pushFloat("💪 SMASH!", "var(--neon-magenta)");
     }
-  }, [skillCooldownEnd, addNews, pushFloat, trackedTimeout]);
+  }, [skillUsesLeft, addNews, pushFloat, trackedTimeout]);
 
   // ── Passive tick effects: g_calm + p_meditation ──────────────────────────
   useEffect(() => {
