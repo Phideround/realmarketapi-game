@@ -355,6 +355,8 @@ export function useGame() {
           if (arts.includes("g_insurance") && ns.hp < 25) hpLoss = Math.round(hpLoss * 0.5);
           // pet_bear: -6% HP loss on SHORT losses
           if (gear.includes("pet_bear") && p.dir === "SHORT") hpLoss = Math.round(hpLoss * 0.94);
+          if (gear.includes("cos_cave")) hpLoss = Math.round(hpLoss * 0.95);
+          if (gear.includes("char_hedger")) hpLoss = Math.round(hpLoss * 0.85);
           // hero passive hp mult
           if (hPas.hpLossMult) hpLoss = Math.round(hpLoss * hPas.hpLossMult);
           if (arts.includes("p_yolo")) hpLoss = Math.round(hpLoss * 1.30);
@@ -415,6 +417,14 @@ export function useGame() {
           ns.profit = Math.max(0, ns.profit - loss);
           ns.balance = Math.max(0, ns.balance - balanceLoss);
           pushFloat(`-$${balanceLoss}`, "var(--neon-red)");
+
+          // pet_fox: cope bonus coins on loss
+          if (gear.includes("pet_fox")) {
+            const cope = 4;
+            ns.coins += cope;
+            ns.levelCoinsEarned += cope;
+            pushFloat(`+${cope} 🦊`, "var(--neon-yellow)");
+          }
 
           // b_bailout: instant $1000 if broke, once per level
           if (arts.includes("b_bailout") && ns.balance <= 50 && !bailoutUsedThisLevelRef.current) {
