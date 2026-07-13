@@ -621,10 +621,7 @@ export function useGame() {
   const predict = useCallback((p: Prediction) => {
     if (stats.gameOver) return;
     sfx.click();
-    if (p === "SKIP") {
-      setStats((s) => ({ ...s, skips: s.skips + 1 }));
-      return;
-    }
+    if (p === "SKIP") return; // SKIP removed from gameplay
     const feed = feedRef.current!;
     const cur = feed.peek();
     const entry = cur.close;
