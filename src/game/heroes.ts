@@ -36,7 +36,7 @@ export const HEROES: HeroDef[] = [
     skillName: "😴 SLEEP",
     skillDesc: "Pause the chart 5s, heal +20 HP. Great for a market timeout.",
     skillId: "sleep",
-    cooldownMs: 25000,
+    uses: 5,
     passive: { hpLossMult: 0.85, coinMult: 1.10 },
   },
   {
@@ -49,7 +49,7 @@ export const HEROES: HeroDef[] = [
     skillName: "✨ VISION",
     skillDesc: "Your NEXT trade is guaranteed to win.",
     skillId: "prophet",
-    cooldownMs: 35000,
+    uses: 4,
     passive: { xpMult: 1.05, coinMult: 1.05 },
   },
   {
@@ -62,7 +62,7 @@ export const HEROES: HeroDef[] = [
     skillName: "❤️ FULL HEAL",
     skillDesc: "Restore HP to full instantly.",
     skillId: "heal",
-    cooldownMs: 60000,
+    uses: 3,
     passive: { hpLossMult: 0.75, startHp: 30 },
   },
   {
@@ -75,7 +75,7 @@ export const HEROES: HeroDef[] = [
     skillName: "💰 DOUBLE UP",
     skillDesc: "Next 3 wins pay DOUBLE coins.",
     skillId: "double_coins",
-    cooldownMs: 40000,
+    uses: 4,
     passive: { coinMult: 1.25, startCoins: 100 },
   },
   {
@@ -88,7 +88,7 @@ export const HEROES: HeroDef[] = [
     skillName: "🔄 REBOOT",
     skillDesc: "Wipe the chart — regenerate a fresh pattern.",
     skillId: "rewind",
-    cooldownMs: 45000,
+    uses: 3,
     passive: { gainMult: 1.15, riskPct: 0.05 },
   },
   {
@@ -101,7 +101,7 @@ export const HEROES: HeroDef[] = [
     skillName: "🚀 MONEY PRINTER",
     skillDesc: "+300 coins right now. Force next trade auto-win.",
     skillId: "print_money",
-    cooldownMs: 55000,
+    uses: 3,
     passive: { gainMult: 1.60, riskPct: 0.12, coinMult: 1.10 },
   },
   {
@@ -114,7 +114,7 @@ export const HEROES: HeroDef[] = [
     skillName: "🛡 BAILOUT",
     skillDesc: "Immune to next 3 losses (HP + balance).",
     skillId: "shield",
-    cooldownMs: 50000,
+    uses: 4,
     passive: { lossMult: 0.60, startCoins: 200 },
   },
   {
@@ -127,7 +127,7 @@ export const HEROES: HeroDef[] = [
     skillName: "💪 DIAMOND SMASH",
     skillDesc: "Full HP + gain a temporary shield for 3 losses.",
     skillId: "diamond_hands",
-    cooldownMs: 50000,
+    uses: 3,
     passive: { coinMult: 1.20, gainMult: 1.10, startHp: 15 },
   },
 ];
