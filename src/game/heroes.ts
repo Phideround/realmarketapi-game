@@ -10,7 +10,8 @@ export interface HeroDef {
   skillName: string;
   skillDesc: string;
   skillId: HeroSkillId;
-  cooldownMs: number;
+  /** Total uses of the active skill per run (replaces cooldown). */
+  uses: number;
   // passive multipliers/mods applied automatically in game math
   passive: {
     coinMult?: number;      // multiplies coin gains
