@@ -754,6 +754,26 @@ export function useGame() {
       setStats((s) => ({ ...s, balance: s.balance + 1500 }));
       pushFloat("+$1500 🤝", "var(--neon-green)");
     }
+    if (id === "redbull") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 12) }));
+      pushFloat("+12 HP 🦋", "var(--neon-green)");
+    }
+    if (id === "coffee_shot") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 8) }));
+      pushFloat("+8 HP ☕", "var(--neon-green)");
+    }
+    if (id === "sandwich") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 12) }));
+      pushFloat("+12 HP 🥪", "var(--neon-green)");
+    }
+    if (id === "ramen") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 6) }));
+      pushFloat("+6 HP 🍜", "var(--neon-green)");
+    }
+    if (id === "adrenaline") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 30), combo: s.combo + 2 }));
+      pushFloat("+30 HP 💉", "var(--neon-green)");
+    }
   }, [pushFloat]);
 
   // ── Hero skill activation ────────────────────────────────────────────────
