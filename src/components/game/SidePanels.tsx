@@ -1,6 +1,7 @@
 import { fmt } from "@/game/format";
 import type { ReactNode } from "react";
 import type { GameEvent, Stats } from "@/game/types";
+import type { HeroDef } from "@/game/heroes";
 
 function PanelTitle({ children }: { children: ReactNode }) {
   return <div className="font-pixel text-[10px] text-neon-blue mb-2 uppercase tracking-widest">{children}</div>;
@@ -50,9 +51,11 @@ interface LeftPanelProps {
   owned: string[];
   missions: MissionState[];
   onClaimMission?: (id: string) => void;
+  hero?: HeroDef | null;
+  skillUsesLeft?: number;
 }
 
-export function LeftPanel({ stats, owned, missions, onClaimMission }: LeftPanelProps) {
+export function LeftPanel({ stats, owned, missions, onClaimMission, hero, skillUsesLeft }: LeftPanelProps) {
   // Find the highest-tier owned character and pet
   const charKeys = Object.keys(CHAR_META);
   const activeChar = [...charKeys].reverse().find(k => owned.includes(k));
@@ -72,6 +75,26 @@ export function LeftPanel({ stats, owned, missions, onClaimMission }: LeftPanelP
 
   return (
     <aside className="pixel-panel p-3 flex flex-col gap-3 h-full overflow-y-auto min-h-0">
+      {/* Hero */}
+      {hero && (
+        <div>
+          <PanelTitle>Your Hero</PanelTitle>
+          <div
+            className="pixel-panel p-2 flex items-center gap-2"
+            style={{ borderColor: hero.color, boxShadow: `0 0 10px ${hero.color}40` }}
+          >
+            <div className="text-2xl">{hero.emoji}</div>
+            <div className="font-term text-[11px] leading-tight">
+              <div className="font-pixel text-[10px]" style={{ color: hero.color }}>{hero.name}</div>
+              <div className="text-muted-foreground">{hero.passiveDesc}</div>
+              <div className="text-neon-yellow font-pixel text-[9px] mt-0.5">
+                {hero.skillName} · {skillUsesLeft ?? 0}× left
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Character */}
       <div>
         <PanelTitle>Character</PanelTitle>
