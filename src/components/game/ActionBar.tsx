@@ -32,18 +32,9 @@ export function ActionBar({ onPredict, pending, disabled }: Props) {
         >
           🔴 SHORT
         </button>
-        {/* Skip — deliberately small and unobtrusive */}
-        <button
-          disabled={disabled}
-          onClick={() => onPredict("SKIP")}
-          className="px-3 py-2 font-pixel text-[9px] uppercase text-muted-foreground pixel-panel opacity-50 hover:opacity-75 disabled:opacity-20 transition-opacity self-stretch flex items-center"
-          title="Skip this candle (S)"
-        >
-          ⏭
-        </button>
       </div>
       <div className="font-term text-[11px] text-muted-foreground text-center">
-        Hotkeys: <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-muted-foreground">S</span> skip
+        Hotkeys: <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-neon-blue">Q</span> hero skill
       </div>
     </div>
   );

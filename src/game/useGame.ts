@@ -66,12 +66,14 @@ export function useGame() {
   const [heroId, setHeroIdState] = useState<string | null>(null);
   const heroRef = useRef<HeroDef | null>(null);
   const [skillCooldownEnd, setSkillCooldownEnd] = useState(0);
+  const [skillUsesLeft, setSkillUsesLeft] = useState(0);
   const setHeroId = useCallback((id: string | null) => {
     heroRef.current = heroById(id);
     setHeroIdState(id);
     // Apply starting bonuses
     const h = heroRef.current;
     if (!h) return;
+    setSkillUsesLeft(h.uses);
     setStats((s) => ({
       ...s,
       coins: s.coins + (h.passive.startCoins ?? 0),
@@ -153,8 +155,12 @@ export function useGame() {
         const forcedWin = nextTradeWinRef.current || (firstTradeRef.current && arts.includes("w_focus"));
         if (nextTradeWinRef.current) nextTradeWinRef.current = false;
         const effectiveWin = win || forcedWin;
-        // b_time_stop: every 8th trade = automatic free turn (skip resolution)
-        const isFreeTurn = arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0;
+        // b_time_stop: every 8th trade grants bonus coins (no longer skips)
+        if (arts.includes("b_time_stop") && totalTradesRef.current % 8 === 0) {
+          ns.coins += 80;
+          ns.levelCoinsEarned += 80;
+          pushFloat("⏸️ TIME STOP +80", "var(--neon-blue)");
+        }
         // p_the_algo: 10% auto-win chance
         const algoWin = !win && arts.includes("p_the_algo") && Math.random() < 0.10;
         // quant shop item: every 5th trade auto-wins
@@ -165,11 +171,6 @@ export function useGame() {
         const hasLeverage = arts.includes("b_leverage");
 
         if (firstTradeRef.current) firstTradeRef.current = false;
-
-        if (isFreeTurn) {
-          pushFloat("⏸️ TIME STOP", "var(--neon-blue)");
-          return ns; // skip this trade entirely
-        }
 
         // vpn shop item: 5% auto-win
         const vpnWin = !win && gear.includes("vpn") && Math.random() < 0.05;
@@ -233,12 +234,53 @@ export function useGame() {
           if (hPas.coinMult)                  coinGain = Math.round(coinGain * hPas.coinMult);
           if (doubleCoinsRef.current > 0)     { coinGain *= 2; doubleCoinsRef.current--; pushFloat("💰 x2 COINS!", "var(--neon-yellow)"); }
 
+          // ── Indicator bonus: each owned indicator gives +3% coins & +2% XP ──
+          const indCount = gear.filter((i) => i.startsWith("ind_")).length;
+          if (indCount > 0) coinGain = Math.round(coinGain * (1 + indCount * 0.03));
+
+          // ── Cosmetic passive bonuses ─────────────────────────────────────
+          const cosCoinMult: Record<string, number> = {
+            cos_crt: 1.01, cos_neon: 1.02, cos_gold: 1.03, cos_wall_st: 1.04,
+            cos_matrix: 1.05, cos_god: 1.10, cos_vapor: 1.02,
+          };
+          for (const c of gear) if (cosCoinMult[c]) coinGain = Math.round(coinGain * cosCoinMult[c]);
+          if (gear.includes("cos_retro")) coinGain += 1;
+
+          // ── Luxury multipliers (very expensive vanity → big passive) ─────
+          const luxMult: Record<string, number> = {
+            lux_watch: 1.08, lux_lambo: 1.15, lux_yacht: 1.20, lux_jet: 1.25,
+            lux_penthouse: 1.30, lux_island: 1.50, lux_rocket: 1.80, lux_bank: 2.0,
+          };
+          for (const l of gear) if (luxMult[l]) coinGain = Math.round(coinGain * luxMult[l]);
+
+          // Extra gear coin/XP
+          if (gear.includes("6monitor")) coinGain = Math.round(coinGain * 1.08);
+          if (gear.includes("prime_data")) coinGain = Math.round(coinGain * 1.15);
+          if (gear.includes("chair"))    coinGain = Math.round(coinGain * 1.02);
+          if (gear.includes("char_influencer")) coinGain = Math.round(coinGain * 1.08);
+          if (gear.includes("char_hodler"))  coinGain = Math.round(coinGain * 1.05);
+          if (gear.includes("pet_fox"))      { /* handled on loss */ }
+          if (gear.includes("pet_octo"))     coinGain = Math.round(coinGain * 1.10);
+          if (gear.includes("pet_unicorn"))  coinGain = Math.round(coinGain * 1.30);
+
           ns.coins += coinGain;
           ns.levelCoinsEarned += coinGain;
 
           let xpGain = 10 + ns.combo * 2 + streakTier * 5;
           if (arts.includes("w_xp")) xpGain = Math.round(xpGain * 1.20);
           if (hPas.xpMult)           xpGain = Math.round(xpGain * hPas.xpMult);
+          if (indCount > 0) xpGain = Math.round(xpGain * (1 + indCount * 0.02));
+          // Cosmetic XP mults
+          const cosXpMult: Record<string, number> = {
+            cos_cyber: 1.02, cos_japan: 1.02, cos_moon: 1.03, cos_matrix: 1.03, cos_god: 1.10,
+          };
+          for (const c of gear) if (cosXpMult[c]) xpGain = Math.round(xpGain * cosXpMult[c]);
+          if (gear.includes("headset")) xpGain = Math.round(xpGain * 1.03);
+          if (gear.includes("6monitor")) xpGain = Math.round(xpGain * 1.08);
+          if (gear.includes("prime_data")) xpGain = Math.round(xpGain * 1.10);
+          if (gear.includes("pet_owl")) xpGain = Math.round(xpGain * 1.04);
+          if (gear.includes("pet_octo")) xpGain = Math.round(xpGain * 1.05);
+          if (gear.includes("char_hodler")) xpGain = Math.round(xpGain * 1.10);
           ns.xp += xpGain;
 
           // BALANCE gains (fixed-risk position sizing)
@@ -313,6 +355,8 @@ export function useGame() {
           if (arts.includes("g_insurance") && ns.hp < 25) hpLoss = Math.round(hpLoss * 0.5);
           // pet_bear: -6% HP loss on SHORT losses
           if (gear.includes("pet_bear") && p.dir === "SHORT") hpLoss = Math.round(hpLoss * 0.94);
+          if (gear.includes("cos_cave")) hpLoss = Math.round(hpLoss * 0.95);
+          if (gear.includes("char_hedger")) hpLoss = Math.round(hpLoss * 0.85);
           // hero passive hp mult
           if (hPas.hpLossMult) hpLoss = Math.round(hpLoss * hPas.hpLossMult);
           if (arts.includes("p_yolo")) hpLoss = Math.round(hpLoss * 1.30);
@@ -361,6 +405,8 @@ export function useGame() {
           // w_bandage: small heal on loss
           if (arts.includes("w_bandage")) ns.hp = Math.min(ns.maxHp, ns.hp + 3);
           if (arts.includes("w_snack"))   ns.hp = Math.min(ns.maxHp, ns.hp + 2);
+          // w_patience: first 3 losses per level heal +5 HP
+          if (arts.includes("w_patience") && ns.losses <= 3) ns.hp = Math.min(ns.maxHp, ns.hp + 5);
 
           // BALANCE loss (fixed-risk sizing)
           let balanceLoss = positionRisk;
@@ -371,6 +417,14 @@ export function useGame() {
           ns.profit = Math.max(0, ns.profit - loss);
           ns.balance = Math.max(0, ns.balance - balanceLoss);
           pushFloat(`-$${balanceLoss}`, "var(--neon-red)");
+
+          // pet_fox: cope bonus coins on loss
+          if (gear.includes("pet_fox")) {
+            const cope = 4;
+            ns.coins += cope;
+            ns.levelCoinsEarned += cope;
+            pushFloat(`+${cope} 🦊`, "var(--neon-yellow)");
+          }
 
           // b_bailout: instant $1000 if broke, once per level
           if (arts.includes("b_bailout") && ns.balance <= 50 && !bailoutUsedThisLevelRef.current) {
@@ -614,10 +668,7 @@ export function useGame() {
   const predict = useCallback((p: Prediction) => {
     if (stats.gameOver) return;
     sfx.click();
-    if (p === "SKIP") {
-      setStats((s) => ({ ...s, skips: s.skips + 1 }));
-      return;
-    }
+    if (p === "SKIP") return; // SKIP removed from gameplay
     const feed = feedRef.current!;
     const cur = feed.peek();
     const entry = cur.close;
@@ -663,6 +714,7 @@ export function useGame() {
     heroRef.current = null;
     setHeroIdState(null);
     setSkillCooldownEnd(0);
+    setSkillUsesLeft(0);
     startRef.current = Date.now();
     lastEventRef.current = Date.now();
     lastBossRef.current = Date.now();
@@ -702,15 +754,34 @@ export function useGame() {
       setStats((s) => ({ ...s, balance: s.balance + 1500 }));
       pushFloat("+$1500 🤝", "var(--neon-green)");
     }
+    if (id === "redbull") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 12) }));
+      pushFloat("+12 HP 🦋", "var(--neon-green)");
+    }
+    if (id === "coffee_shot") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 8) }));
+      pushFloat("+8 HP ☕", "var(--neon-green)");
+    }
+    if (id === "sandwich") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 12) }));
+      pushFloat("+12 HP 🥪", "var(--neon-green)");
+    }
+    if (id === "ramen") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 6) }));
+      pushFloat("+6 HP 🍜", "var(--neon-green)");
+    }
+    if (id === "adrenaline") {
+      setStats((s) => ({ ...s, hp: Math.min(s.maxHp, s.hp + 30), combo: s.combo + 2 }));
+      pushFloat("+30 HP 💉", "var(--neon-green)");
+    }
   }, [pushFloat]);
 
   // ── Hero skill activation ────────────────────────────────────────────────
   const activateSkill = useCallback(() => {
     const h = heroRef.current;
     if (!h) return;
-    const now = Date.now();
-    if (now < skillCooldownEnd) return;
-    setSkillCooldownEnd(now + h.cooldownMs);
+    if (skillUsesLeft <= 0) return;
+    setSkillUsesLeft((n) => n - 1);
     sfx.boss();
     const id: HeroSkillId = h.skillId;
     if (id === "sleep") {
@@ -748,7 +819,7 @@ export function useGame() {
       shieldUsedRef.current += 3;
       pushFloat("💪 SMASH!", "var(--neon-magenta)");
     }
-  }, [skillCooldownEnd, addNews, pushFloat, trackedTimeout]);
+  }, [skillUsesLeft, addNews, pushFloat, trackedTimeout]);
 
   // ── Passive tick effects: g_calm + p_meditation ──────────────────────────
   useEffect(() => {
@@ -768,13 +839,13 @@ export function useGame() {
   return useMemo(() => ({
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
-    heroId, hero: heroRef.current, skillCooldownEnd,
+    heroId, hero: heroRef.current, skillCooldownEnd, skillUsesLeft,
     setScanlines, setPaused, predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
     setHeroId, activateSkill,
   }), [
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
-    heroId, skillCooldownEnd,
+    heroId, skillCooldownEnd, skillUsesLeft,
     predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
     setHeroId, activateSkill,
   ]);

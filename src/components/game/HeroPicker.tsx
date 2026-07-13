@@ -40,7 +40,7 @@ export function HeroPicker({ onPick }: Props) {
               <div className="pixel-panel px-2 py-1 w-full" style={{ borderColor: h.color }}>
                 <div className="font-pixel text-[9px]" style={{ color: h.color }}>{h.skillName}</div>
                 <div className="font-term text-[10px] text-muted-foreground leading-snug">{h.skillDesc}</div>
-                <div className="font-pixel text-[8px] text-neon-yellow mt-1">CD: {Math.round(h.cooldownMs / 1000)}s</div>
+                <div className="font-pixel text-[8px] text-neon-yellow mt-1">USES: {h.uses}× per run</div>
               </div>
               <div className="font-pixel text-[9px] px-2 py-1 pixel-panel" style={{ color: h.color, borderColor: h.color }}>PICK [{idx + 1}]</div>
             </button>

@@ -6,7 +6,7 @@ export type ShopItem = {
   emoji: string;
   cost: number;
   desc: string;
-  tab?: "gear" | "indicators" | "chars" | "pets" | "cosmetics";
+  tab?: "gear" | "consumables" | "indicators" | "chars" | "pets" | "cosmetics" | "luxury";
   requires?: string;
   repeatable?: boolean;
 };
@@ -27,33 +27,49 @@ const GEAR: ShopItem[] = [
   { id: "desk",      name: "Trading Desk",       emoji: "🪑", cost: 380,  desc: "+20% coin score multiplier." },
   // Funny / cursed items
   { id: "girlfriend",name: "Girlfriend",         emoji: "💃", cost: 350,  desc: "40% chance she calls mid-trade. Why did you buy this?" },
-  { id: "redbull",   name: "Red Bull",           emoji: "🦋", cost: 40,   desc: "Wings! −10% HP loss for next 5 trades.", repeatable: true },
   { id: "luckysocks",name: "Lucky Socks",        emoji: "🧦", cost: 70,   desc: "+2 HP whenever you build a streak of 3+." },
   { id: "therapist", name: "Therapist",          emoji: "🛋️", cost: 180,  desc: "Losses feel less painful. −15% HP loss permanently." },
-  { id: "hp_potion", name: "HP Potion",          emoji: "❤️‍🔥", cost: 50, desc: "Restore +25 HP now.", repeatable: true },
-  { id: "balance_loan",name: "Bank Loan",         emoji: "💵", cost: 100, desc: "Instantly +$500 balance (interest-free… for now).", repeatable: true },
-  { id: "small_bailout",name: "Small Bailout",    emoji: "🤝", cost: 200, desc: "Instantly +$1500 balance.", repeatable: true },
   { id: "vpn",       name: "Insider VPN",         emoji: "🕵️", cost: 220, desc: "5% chance every trade to be auto-win." },
-  { id: "pizza",     name: "Pizza Night",         emoji: "🍕", cost: 60,  desc: "Restore +15 HP now.", repeatable: true },
-  { id: "energy_drink",name: "Energy Drink",      emoji: "🥤", cost: 45,  desc: "Restore +10 HP + streak +1.", repeatable: true },
   { id: "meme_stonk",name: "Meme Stonk Book",     emoji: "📕", cost: 130, desc: "+15% coins in MEME / MEME events." },
   { id: "hedge",     name: "Hedge Fund",         emoji: "📉", cost: 900,  desc: "+50% all coin gains.",      requires: "desk" },
   { id: "quant",     name: "Quant Model",        emoji: "🧠", cost: 750,  desc: "Auto-win every 5th trade.", requires: "ai" },
   { id: "dark_pool", name: "Dark Pool Access",   emoji: "🌑", cost: 1500, desc: "No HP loss for first 10 trades per level.", requires: "hedge" },
+  // Extra gear
+  { id: "headset",   name: "Noise Headset",       emoji: "🎧", cost: 55,  desc: "Focus. +3% XP per trade." },
+  { id: "chair",     name: "Ergonomic Chair",    emoji: "💺", cost: 120,  desc: "+2% all coin gains" },
+  { id: "6monitor",  name: "6-Monitor Setup",    emoji: "🖥️", cost: 450,  desc: "+8% coin gains, +8% XP", requires: "monitor" },
+  { id: "prime_data",name: "Prime Data Feed",    emoji: "📡", cost: 600,  desc: "+15% coins & +10% XP per trade", requires: "term" },
+];
+
+// ── Consumables (one-shot repeatable purchases) ──────────────────────────
+const CONSUMABLES: ShopItem[] = [
+  { id: "hp_potion",    name: "HP Potion",       emoji: "❤️‍🔥", cost: 40, desc: "Restore +25 HP now.", repeatable: true },
+  { id: "pizza",        name: "Pizza Night",     emoji: "🍕",  cost: 45, desc: "Restore +15 HP now.", repeatable: true },
+  { id: "energy_drink", name: "Energy Drink",    emoji: "🥤",  cost: 35, desc: "Restore +10 HP + streak +1.", repeatable: true },
+  { id: "redbull",      name: "Red Bull",        emoji: "🦋",  cost: 30, desc: "Wings! Restore +12 HP.", repeatable: true },
+  { id: "balance_loan", name: "Bank Loan",       emoji: "💵",  cost: 80, desc: "Instantly +$500 balance.", repeatable: true },
+  { id: "small_bailout",name: "Small Bailout",   emoji: "🤝",  cost: 150,desc: "Instantly +$1500 balance.", repeatable: true },
+  { id: "coffee_shot",  name: "Espresso Shot",   emoji: "☕",  cost: 20, desc: "Restore +8 HP quickly.", repeatable: true },
+  { id: "sandwich",     name: "Trader Sandwich", emoji: "🥪",  cost: 25, desc: "Restore +12 HP.", repeatable: true },
+  { id: "ramen",        name: "Cup Ramen",       emoji: "🍜",  cost: 15, desc: "Cheap. +6 HP.", repeatable: true },
+  { id: "adrenaline",   name: "Adrenaline Shot", emoji: "💉",  cost: 60, desc: "Full stack +30 HP + streak +2.", repeatable: true },
 ];
 
 const INDICATORS: ShopItem[] = [
-  { id: "ind_vol",  name: "VOL",   emoji: "📊", cost: 30,  desc: "Volume bars at bottom of chart" },
-  { id: "ind_ma",   name: "MA",    emoji: "📈", cost: 45,  desc: "Simple Moving Average line (20)", requires: "ind_vol" },
-  { id: "ind_ema",  name: "EMA",   emoji: "📉", cost: 55,  desc: "Exponential Moving Average (14)",  requires: "ind_ma" },
-  { id: "ind_sr",   name: "S/R",   emoji: "⚖️", cost: 65,  desc: "Support & Resistance lines",       requires: "ind_ma" },
-  { id: "ind_vwap", name: "VWAP",  emoji: "💧", cost: 90,  desc: "Volume Weighted Avg Price line",   requires: "ind_vol" },
-  { id: "ind_rsi",  name: "RSI",   emoji: "🔋", cost: 70,  desc: "RSI overbought/oversold label",    requires: "ind_ema" },
-  { id: "ind_macd", name: "MACD",  emoji: "🌊", cost: 85,  desc: "MACD momentum signal",             requires: "ind_ema" },
-  { id: "ind_atr",  name: "ATR",   emoji: "📏", cost: 70,  desc: "Avg True Range volatility display", requires: "ind_sr" },
-  { id: "ind_bb",   name: "BB",    emoji: "〰",  cost: 150, desc: "Bollinger Bands (20-period)",        requires: "ind_ema" },
-  { id: "ind_fib",  name: "Fib",   emoji: "🌀", cost: 200, desc: "Fibonacci retracement levels",      requires: "ind_sr" },
-  { id: "ind_smc",  name: "SMC",   emoji: "🧠", cost: 260, desc: "Smart Money: FVG, Order Blocks, Liquidity Sweeps", requires: "ind_sr" },
+  // Each owned indicator also gives +3% coins & +2% XP per trade
+  { id: "ind_vol",  name: "VOL",   emoji: "📊", cost: 30,  desc: "Volume bars + +3% coins & +2% XP/trade" },
+  { id: "ind_ma",   name: "MA",    emoji: "📈", cost: 45,  desc: "SMA(20) line + +3% coins & +2% XP", requires: "ind_vol" },
+  { id: "ind_ema",  name: "EMA",   emoji: "📉", cost: 55,  desc: "EMA(14) line + +3% coins & +2% XP",  requires: "ind_ma" },
+  { id: "ind_sr",   name: "S/R",   emoji: "⚖️", cost: 65,  desc: "Support/Resistance + +3% coins & +2% XP", requires: "ind_ma" },
+  { id: "ind_vwap", name: "VWAP",  emoji: "💧", cost: 90,  desc: "VWAP line + +3% coins & +2% XP",   requires: "ind_vol" },
+  { id: "ind_rsi",  name: "RSI",   emoji: "🔋", cost: 70,  desc: "RSI label + +3% coins & +2% XP",    requires: "ind_ema" },
+  { id: "ind_macd", name: "MACD",  emoji: "🌊", cost: 85,  desc: "MACD signal + +3% coins & +2% XP",  requires: "ind_ema" },
+  { id: "ind_atr",  name: "ATR",   emoji: "📏", cost: 70,  desc: "ATR display + +3% coins & +2% XP",  requires: "ind_sr" },
+  { id: "ind_bb",   name: "BB",    emoji: "〰",  cost: 150, desc: "Bollinger Bands + +3% coins & +2% XP", requires: "ind_ema" },
+  { id: "ind_fib",  name: "Fib",   emoji: "🌀", cost: 200, desc: "Fibonacci levels + +3% coins & +2% XP", requires: "ind_sr" },
+  { id: "ind_smc",  name: "SMC",   emoji: "🧠", cost: 260, desc: "Smart Money zones + +3% coins & +2% XP", requires: "ind_sr" },
+  { id: "ind_ichi", name: "ICHI",  emoji: "☁️",  cost: 320, desc: "Ichimoku cloud + +3% coins & +2% XP", requires: "ind_bb" },
+  { id: "ind_pivot",name: "PIVOT", emoji: "🎯", cost: 220, desc: "Pivot points + +3% coins & +2% XP", requires: "ind_sr" },
 ];
 
 const CHARS: ShopItem[] = [
@@ -65,6 +81,10 @@ const CHARS: ShopItem[] = [
   { id: "char_ai",         name: "AI Trader",     emoji: "🤖", cost: 260,  desc: "Auto-wins 1 trade in 15",          requires: "char_swing" },
   { id: "char_quant",      name: "Quantitative",  emoji: "🧠", cost: 450,  desc: "+30% all gains, based on academic models", requires: "char_ai" },
   { id: "char_fund_mgr",   name: "Fund Manager",  emoji: "🏦", cost: 650,  desc: "Never lose more than 5 HP per trade",        requires: "char_quant" },
+  { id: "char_influencer", name: "Influencer",    emoji: "🎥", cost: 220,  desc: "+8% coins, +2 coins per news event",           requires: "char_day" },
+  { id: "char_hedger",     name: "Hedger",        emoji: "🛡️", cost: 300,  desc: "−15% HP loss on all trades" },
+  { id: "char_whale_hnt",  name: "Whale Hunter",  emoji: "🎯", cost: 400,  desc: "+20% coins in HIGH_VOL", requires: "char_crypto_max" },
+  { id: "char_hodler",     name: "HODLer",        emoji: "🗿", cost: 180,  desc: "+5% coins & +10% XP after any win" },
 ];
 
 const PETS: ShopItem[] = [
@@ -78,28 +98,47 @@ const PETS: ShopItem[] = [
   { id: "pet_shark",  name: "Market Shark", emoji: "🦈", cost: 500, desc: "Heal +5 HP per win (aggressive)",        requires: "pet_whale" },
   { id: "pet_hamster",name: "Trading Hamster", emoji: "🐹", cost: 60, desc: "Random 2% coin bonus per trade. It's just a hamster." },
   { id: "pet_parrot", name: "News Parrot",  emoji: "🦜", cost: 90,   desc: "Repeats headlines. +1 coin per news event." },
+  { id: "pet_owl",    name: "Wise Owl",     emoji: "🦉", cost: 150,  desc: "+4% XP per trade" },
+  { id: "pet_fox",    name: "Sly Fox",      emoji: "🦊", cost: 180,  desc: "+8% coins on losing trades (cope bonus)" },
+  { id: "pet_octo",   name: "Octopus Trader",emoji: "🐙", cost: 340, desc: "+10% coins & +5% XP (8 arms, 8 trades)", requires: "pet_robot" },
+  { id: "pet_unicorn",name: "Startup Unicorn",emoji: "🦄", cost: 800, desc: "+30% coins. Very rare.", requires: "pet_bull" },
 ];
 
 const COSMETICS: ShopItem[] = [
-  { id: "cos_crt",    name: "CRT Monitor",    emoji: "📺", cost: 40,   desc: "Enhanced scanline effect" },
-  { id: "cos_neon",   name: "Neon Theme",     emoji: "🌈", cost: 55,   desc: "Vivid neon color overrides" },
-  { id: "cos_cyber",  name: "Cyber Theme",    emoji: "💻", cost: 55,   desc: "Cyberpunk blue palette",               requires: "cos_neon" },
-  { id: "cos_gold",   name: "Gold Candles",   emoji: "✨", cost: 70,   desc: "Golden candle color scheme" },
-  { id: "cos_japan",  name: "Japanese Room",  emoji: "⛩️", cost: 75,   desc: "Sakura-inspired chart aesthetic" },
-  { id: "cos_cave",   name: "Crypto Cave",    emoji: "⛏️", cost: 100,  desc: "Underground mining theme",             requires: "cos_gold" },
-  { id: "cos_moon",   name: "Moon Base",      emoji: "🌙", cost: 120,  desc: "Lunar station command center",         requires: "cos_japan" },
-  { id: "cos_wall_st",name: "Wall Street",    emoji: "🏦", cost: 140,  desc: "Classic trading floor aesthetic" },
-  { id: "cos_matrix", name: "Matrix Mode",    emoji: "🟩", cost: 260,  desc: "Green cascading code overlay",         requires: "cos_cyber" },
-  { id: "cos_god",    name: "God Trader",     emoji: "🌟", cost: 700,  desc: "Divine golden aura on all elements",   requires: "cos_moon" },
+  // Cosmetics apply visual themes AND small passives (juice).
+  { id: "cos_crt",    name: "CRT Monitor",    emoji: "📺", cost: 40,   desc: "Bold scanlines. +1% coins from vibes." },
+  { id: "cos_neon",   name: "Neon Theme",     emoji: "🌈", cost: 55,   desc: "Vivid neon saturation. +2% coins." },
+  { id: "cos_cyber",  name: "Cyber Theme",    emoji: "💻", cost: 55,   desc: "Cyberpunk hue shift. +2% XP.", requires: "cos_neon" },
+  { id: "cos_gold",   name: "Gold Candles",   emoji: "✨", cost: 90,   desc: "Golden glow. +3% coins." },
+  { id: "cos_japan",  name: "Sakura Room",    emoji: "⛩️", cost: 75,   desc: "Sakura tint. +2% XP." },
+  { id: "cos_cave",   name: "Crypto Cave",    emoji: "⛏️", cost: 120,  desc: "Dim orange glow. −5% HP loss.", requires: "cos_gold" },
+  { id: "cos_moon",   name: "Moon Base",      emoji: "🌙", cost: 160,  desc: "Cold blue palette. +3% XP.", requires: "cos_japan" },
+  { id: "cos_wall_st",name: "Wall Street",    emoji: "🏦", cost: 180,  desc: "Prestige tint. +4% coins." },
+  { id: "cos_matrix", name: "Matrix Mode",    emoji: "🟩", cost: 260,  desc: "Green cascade. +5% coins & +3% XP.", requires: "cos_cyber" },
+  { id: "cos_god",    name: "God Trader",     emoji: "🌟", cost: 700,  desc: "Divine golden aura. +10% coins & +10% XP.", requires: "cos_moon" },
+  { id: "cos_vapor",  name: "Vaporwave",      emoji: "🌸", cost: 90,   desc: "Pink/purple wash. +2% coins." },
+  { id: "cos_retro",  name: "Retro Arcade",   emoji: "🕹️", cost: 100,  desc: "8-bit arcade palette. +1 coin/trade." },
 ];
 
-type Tab = "gear" | "indicators" | "chars" | "pets" | "cosmetics";
+// ── Luxury (expensive vanity items) ──────────────────────────────────────
+const LUXURY: ShopItem[] = [
+  { id: "lux_watch",     name: "Rolex Submariner", emoji: "⌚", cost: 2500,  desc: "+8% coin gains. Wrist gets heavier." },
+  { id: "lux_lambo",     name: "Lamborghini",       emoji: "🏎️", cost: 6000,  desc: "+15% coin gains. WAGMI." },
+  { id: "lux_yacht",     name: "Superyacht",        emoji: "🛥️", cost: 12000, desc: "+20% coin gains. Docked in Monaco." },
+  { id: "lux_jet",       name: "Private Jet",       emoji: "🛩️", cost: 15000, desc: "+25% coin gains. NetJets who?" },
+  { id: "lux_penthouse", name: "NY Penthouse",      emoji: "🏙️", cost: 20000, desc: "+30% coin gains. View of the Fed." },
+  { id: "lux_island",    name: "Private Island",    emoji: "🏝️", cost: 40000, desc: "+50% coin gains. Off-grid king." },
+  { id: "lux_rocket",    name: "SpaceX Rocket",     emoji: "🚀", cost: 80000, desc: "+80% coin gains. Actually to the moon." },
+  { id: "lux_bank",      name: "Buy A Bank",        emoji: "🏦", cost: 150000,desc: "+100% coin gains. You ARE the market." },
+];
+
+type Tab = "gear" | "consumables" | "indicators" | "chars" | "pets" | "cosmetics" | "luxury";
 
 function ItemCard({ item, owned, coins, onBuy }: { item: ShopItem; owned: string[]; coins: number; onBuy: (i: ShopItem) => void }) {
   const has = owned.includes(item.id) && !item.repeatable;
   const isLocked = !!item.requires && !owned.includes(item.requires);
   const canAfford = coins >= item.cost;
-  const reqItem = item.requires ? [...GEAR, ...INDICATORS, ...CHARS, ...PETS, ...COSMETICS].find(i => i.id === item.requires) : null;
+  const reqItem = item.requires ? [...GEAR, ...CONSUMABLES, ...INDICATORS, ...CHARS, ...PETS, ...COSMETICS, ...LUXURY].find(i => i.id === item.requires) : null;
   return (
     <button
       disabled={has || isLocked || !canAfford}
@@ -126,18 +165,22 @@ export function Shop({ coins, onBuy, owned, onClose }: { coins: number; owned: s
 
   const tabItems: Record<Tab, ShopItem[]> = {
     gear: GEAR,
+    consumables: CONSUMABLES,
     indicators: INDICATORS,
     chars: CHARS,
     pets: PETS,
     cosmetics: COSMETICS,
+    luxury: LUXURY,
   };
 
   const TAB_LABELS: Record<Tab, string> = {
     gear: "⚙ GEAR",
+    consumables: "🥤 CONSUMABLES",
     indicators: "📉 INDICATORS",
     chars: "🧑 CHARS",
     pets: "🐾 PETS",
     cosmetics: "🎨 COSMETICS",
+    luxury: "💎 LUXURY",
   };
 
   return (

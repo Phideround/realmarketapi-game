@@ -58,10 +58,24 @@ const MISSION_POOL: MissionDef[] = [
   { id: "profit500", text: "Earn $500 profit", reward: 60, target: 500, getProgress: (s) => s.profit },
   { id: "acc70", text: "70% accuracy (10+)", reward: 80, target: 70, getProgress: (s) => s.wins + s.losses >= 10 ? s.accuracy : 0 },
   { id: "nolose", text: "Win 3 in a row", reward: 40, target: 3, getProgress: (s) => s.combo },
+  { id: "win25", text: "Win 25 trades", reward: 150, target: 25, getProgress: (s) => s.wins },
+  { id: "combo15", text: "Reach x15 combo", reward: 200, target: 15, getProgress: (s) => s.bestCombo },
+  { id: "survive5", text: "Survive 5 min", reward: 140, target: 300, getProgress: (s) => Math.floor(s.survivalMs / 1000) },
+  { id: "level3", text: "Reach Game Level 3", reward: 250, target: 3, getProgress: (_, gl) => gl },
+  { id: "level5", text: "Reach Game Level 5", reward: 500, target: 5, getProgress: (_, gl) => gl },
+  { id: "profit2k", text: "Earn $2000 profit", reward: 200, target: 2000, getProgress: (s) => s.profit },
+  { id: "profit10k", text: "Earn $10000 profit", reward: 600, target: 10000, getProgress: (s) => s.profit },
+  { id: "acc80", text: "80% accuracy (20+)", reward: 200, target: 80, getProgress: (s) => s.wins + s.losses >= 20 ? s.accuracy : 0 },
+  { id: "streak7", text: "Win 7 in a row", reward: 120, target: 7, getProgress: (s) => s.combo },
+  { id: "streak10", text: "Win 10 in a row", reward: 220, target: 10, getProgress: (s) => s.combo },
+  { id: "coin_hoard", text: "Hoard 500 coins", reward: 100, target: 500, getProgress: (s) => s.coins },
+  { id: "balance_5k", text: "Balance ≥ $5000", reward: 150, target: 5000, getProgress: (s) => s.balance },
+  { id: "balance_20k", text: "Balance ≥ $20000", reward: 500, target: 20000, getProgress: (s) => s.balance },
+  { id: "no_hp_loss", text: "Keep HP ≥ 90 after 15 trades", reward: 180, target: 1, getProgress: (s) => (s.wins + s.losses >= 15 && s.hp >= 90) ? 1 : 0 },
 ];
 function generateMissions(): LiveMission[] {
   const shuffled = [...MISSION_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 4).map(m => ({ ...m, progress: 0, completed: false }));
+  return shuffled.slice(0, 6).map(m => ({ ...m, progress: 0, completed: false }));
 }
 
 function Game() {
@@ -137,7 +151,6 @@ function Game() {
       if (!overlayOpen) {
         if (k === "a") g.predict("LONG");
         else if (k === "d") g.predict("SHORT");
-        else if (k === "s") g.predict("SKIP");
         else if (k === "r" || k === "p") g.setPaused((p) => !p);
       }
       if (k === "b") setShopOpen((s) => !s);
@@ -199,18 +212,24 @@ function Game() {
     if (alreadyOwned && !u.repeatable) return;
     if (!u.repeatable) setOwned((o) => [...o, u.id]);
     g.spendCoins(u.cost);
-    // Handle special repeatable effects immediately
-    if (u.id === "hp_potion") {
-      g.applyItemEffect("hp_potion");
-    }
+    // Trigger one-shot consumable effects immediately
+    if (u.repeatable) g.applyItemEffect(u.id);
     sfx.coin();
   }, [g, owned]);
+
+  // ── Cosmetic theme classes (highest-tier owned wins) ─────────────────────
+  const COSMETIC_PRIORITY = [
+    "cos_god", "cos_matrix", "cos_moon", "cos_wall_st",
+    "cos_cave", "cos_cyber", "cos_gold", "cos_vapor",
+    "cos_japan", "cos_neon", "cos_retro", "cos_crt",
+  ];
+  const activeCosmetic = COSMETIC_PRIORITY.find((c) => owned.includes(c));
 
   return (
     <>
       <Analytics />
       <div className={`h-dvh w-full bg-background text-foreground flex flex-col overflow-hidden ${g.shake ? (g.tiltLevel >= 2 ? "animate-heavy-shake" : "animate-shake") : ""
-        } ${g.tiltLevel === 1 ? "tilt-1" : g.tiltLevel === 2 ? "tilt-2" : g.tiltLevel === 3 ? "tilt-3" : ""}`}>
+        } ${g.tiltLevel === 1 ? "tilt-1" : g.tiltLevel === 2 ? "tilt-2" : g.tiltLevel === 3 ? "tilt-3" : ""} ${activeCosmetic ?? ""}`}>
         {/* Screen crack overlay at tilt 3 */}
         {g.tiltLevel >= 3 && (
           <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
@@ -248,13 +267,12 @@ function Game() {
             {g.hero && (
               <button
                 onClick={g.activateSkill}
-                disabled={Date.now() < g.skillCooldownEnd}
+                disabled={g.skillUsesLeft <= 0}
                 className="font-pixel text-[10px] px-3 py-2 pixel-panel"
-                style={{ color: g.hero.color, borderColor: g.hero.color, opacity: Date.now() < g.skillCooldownEnd ? 0.5 : 1 }}
-                title={`${g.hero.skillName} — ${g.hero.skillDesc}`}
+                style={{ color: g.hero.color, borderColor: g.hero.color, opacity: g.skillUsesLeft <= 0 ? 0.4 : 1 }}
+                title={`${g.hero.name} — ${g.hero.skillDesc}`}
               >
-                {g.hero.emoji} [Q] {g.hero.skillName}
-                {Date.now() < g.skillCooldownEnd && ` (${Math.ceil((g.skillCooldownEnd - Date.now())/1000)}s)`}
+                {g.hero.emoji} [Q] {g.hero.skillName} ({g.skillUsesLeft}×)
               </button>
             )}
             <button onClick={() => setShopOpen(true)} className="font-pixel text-[10px] text-neon-yellow px-3 py-2 pixel-panel neon-yellow-glow">🛒 SHOP 🪙{g.stats.coins}</button>
@@ -283,7 +301,7 @@ function Game() {
 
           {/* Main grid — takes all remaining height */}
           <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[200px_1fr_220px] gap-2 overflow-hidden">
-            <div className="hidden lg:block overflow-hidden"><LeftPanel stats={g.stats} owned={owned} missions={missions} /></div>
+            <div className="hidden lg:block overflow-hidden"><LeftPanel stats={g.stats} owned={owned} missions={missions} hero={g.hero} skillUsesLeft={g.skillUsesLeft} /></div>
 
             <main className="flex flex-col gap-2 min-h-0 overflow-hidden">
               <div className={`relative flex-1 min-h-0 pixel-panel ${g.flash === "red" ? "animate-flash-red" : g.flash === "green" ? "animate-flash-green" : ""
@@ -312,7 +330,7 @@ function Game() {
           {/* Bottom hints + compact footer */}
           <div className="shrink-0 flex items-center justify-between gap-2 px-1">
             <div className="font-term text-xs text-muted-foreground">
-              <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-muted-foreground">S</span> skip · <span className="text-neon-blue">B</span> shop · <span className="text-neon-blue">R</span> pause · <span className="text-neon-blue">M</span> music · <span className="text-neon-blue">H</span> hotkeys
+              <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-neon-magenta">Q</span> skill · <span className="text-neon-blue">B</span> shop · <span className="text-neon-blue">R</span> pause · <span className="text-neon-blue">M</span> music · <span className="text-neon-blue">H</span> hotkeys
             </div>
             <a href="https://realmarketapi.com/?utm_source=game" target="_blank" rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1 pixel-panel px-2 py-1 hover:neon-blue-glow transition shrink-0">
@@ -341,10 +359,10 @@ function Game() {
               <div className="font-pixel text-neon-blue text-sm mb-4">⌨ HOTKEYS</div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-term text-xs text-muted-foreground mb-4">
                 {[
-                  ["A", "LONG"], ["D", "SHORT"], ["S", "skip"], ["R / P", "pause/resume"],
+                  ["A", "LONG"], ["D", "SHORT"], ["Q", "hero skill"], ["R / P", "pause/resume"],
                   ["B", "shop"], ["G", "artifacts"], ["N", "new game"], ["M", "music"],
                   ["C", "CRT toggle"], ["H", "this help"], ["ESC", "close dialog"],
-                  ["1/2/3", "pick artifact"],
+                  ["1..8", "pick hero/artifact"],
                 ].map(([key, action]) => (
                   <div key={key} className="flex gap-2">
                     <span className="text-neon-green font-pixel text-[10px] min-w-[40px]">{key}</span>
