@@ -367,6 +367,8 @@ export function useGame() {
           // w_bandage: small heal on loss
           if (arts.includes("w_bandage")) ns.hp = Math.min(ns.maxHp, ns.hp + 3);
           if (arts.includes("w_snack"))   ns.hp = Math.min(ns.maxHp, ns.hp + 2);
+          // w_patience: first 3 losses per level heal +5 HP
+          if (arts.includes("w_patience") && ns.losses <= 3) ns.hp = Math.min(ns.maxHp, ns.hp + 5);
 
           // BALANCE loss (fixed-risk sizing)
           let balanceLoss = positionRisk;
