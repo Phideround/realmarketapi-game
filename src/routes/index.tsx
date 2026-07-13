@@ -229,7 +229,7 @@ function Game() {
     <>
       <Analytics />
       <div className={`h-dvh w-full bg-background text-foreground flex flex-col overflow-hidden ${g.shake ? (g.tiltLevel >= 2 ? "animate-heavy-shake" : "animate-shake") : ""
-        } ${g.tiltLevel === 1 ? "tilt-1" : g.tiltLevel === 2 ? "tilt-2" : g.tiltLevel === 3 ? "tilt-3" : ""}`}>
+        } ${g.tiltLevel === 1 ? "tilt-1" : g.tiltLevel === 2 ? "tilt-2" : g.tiltLevel === 3 ? "tilt-3" : ""} ${activeCosmetic ?? ""}`}>
         {/* Screen crack overlay at tilt 3 */}
         {g.tiltLevel >= 3 && (
           <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
