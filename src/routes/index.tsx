@@ -301,7 +301,7 @@ function Game() {
 
           {/* Main grid — takes all remaining height */}
           <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[200px_1fr_220px] gap-2 overflow-hidden">
-            <div className="hidden lg:block overflow-hidden"><LeftPanel stats={g.stats} owned={owned} missions={missions} /></div>
+            <div className="hidden lg:block overflow-hidden"><LeftPanel stats={g.stats} owned={owned} missions={missions} hero={g.hero} skillUsesLeft={g.skillUsesLeft} /></div>
 
             <main className="flex flex-col gap-2 min-h-0 overflow-hidden">
               <div className={`relative flex-1 min-h-0 pixel-panel ${g.flash === "red" ? "animate-flash-red" : g.flash === "green" ? "animate-flash-green" : ""
