@@ -770,13 +770,13 @@ export function useGame() {
   return useMemo(() => ({
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
-    heroId, hero: heroRef.current, skillCooldownEnd,
+    heroId, hero: heroRef.current, skillCooldownEnd, skillUsesLeft,
     setScanlines, setPaused, predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
     setHeroId, activateSkill,
   }), [
     feed, stats, event, floats, shake, flash, pending, scanlines, paused, news, tick,
     gameLevel, levelTarget, levelReached, activeArtifacts, tiltLevel,
-    heroId, skillCooldownEnd,
+    heroId, skillCooldownEnd, skillUsesLeft,
     predict, reset, spendCoins, addCoins, applyItemEffect, addArtifact, nextLevel, setOwnedItems,
     setHeroId, activateSkill,
   ]);
