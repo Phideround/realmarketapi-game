@@ -330,7 +330,7 @@ function Game() {
           {/* Bottom hints + compact footer */}
           <div className="shrink-0 flex items-center justify-between gap-2 px-1">
             <div className="font-term text-xs text-muted-foreground">
-              <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-muted-foreground">S</span> skip · <span className="text-neon-blue">B</span> shop · <span className="text-neon-blue">R</span> pause · <span className="text-neon-blue">M</span> music · <span className="text-neon-blue">H</span> hotkeys
+              <span className="text-neon-green">A</span> LONG · <span className="text-neon-red">D</span> SHORT · <span className="text-neon-magenta">Q</span> skill · <span className="text-neon-blue">B</span> shop · <span className="text-neon-blue">R</span> pause · <span className="text-neon-blue">M</span> music · <span className="text-neon-blue">H</span> hotkeys
             </div>
             <a href="https://realmarketapi.com/?utm_source=game" target="_blank" rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1 pixel-panel px-2 py-1 hover:neon-blue-glow transition shrink-0">
@@ -359,10 +359,10 @@ function Game() {
               <div className="font-pixel text-neon-blue text-sm mb-4">⌨ HOTKEYS</div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-term text-xs text-muted-foreground mb-4">
                 {[
-                  ["A", "LONG"], ["D", "SHORT"], ["S", "skip"], ["R / P", "pause/resume"],
+                  ["A", "LONG"], ["D", "SHORT"], ["Q", "hero skill"], ["R / P", "pause/resume"],
                   ["B", "shop"], ["G", "artifacts"], ["N", "new game"], ["M", "music"],
                   ["C", "CRT toggle"], ["H", "this help"], ["ESC", "close dialog"],
-                  ["1/2/3", "pick artifact"],
+                  ["1..8", "pick hero/artifact"],
                 ].map(([key, action]) => (
                   <div key={key} className="flex gap-2">
                     <span className="text-neon-green font-pixel text-[10px] min-w-[40px]">{key}</span>
