@@ -261,13 +261,12 @@ function Game() {
             {g.hero && (
               <button
                 onClick={g.activateSkill}
-                disabled={Date.now() < g.skillCooldownEnd}
+                disabled={g.skillUsesLeft <= 0}
                 className="font-pixel text-[10px] px-3 py-2 pixel-panel"
-                style={{ color: g.hero.color, borderColor: g.hero.color, opacity: Date.now() < g.skillCooldownEnd ? 0.5 : 1 }}
-                title={`${g.hero.skillName} — ${g.hero.skillDesc}`}
+                style={{ color: g.hero.color, borderColor: g.hero.color, opacity: g.skillUsesLeft <= 0 ? 0.4 : 1 }}
+                title={`${g.hero.name} — ${g.hero.skillDesc}`}
               >
-                {g.hero.emoji} [Q] {g.hero.skillName}
-                {Date.now() < g.skillCooldownEnd && ` (${Math.ceil((g.skillCooldownEnd - Date.now())/1000)}s)`}
+                {g.hero.emoji} [Q] {g.hero.skillName} ({g.skillUsesLeft}×)
               </button>
             )}
             <button onClick={() => setShopOpen(true)} className="font-pixel text-[10px] text-neon-yellow px-3 py-2 pixel-panel neon-yellow-glow">🛒 SHOP 🪙{g.stats.coins}</button>
